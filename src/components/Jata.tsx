@@ -18,7 +18,7 @@ export function Jata({ className, ringkas = false }: { className?: string; ringk
          aria-label="Jata Family Day Keluarga Mat Daud dan Siti Fatimah">
       <defs>
         <path id="arcAtas" d="M 34 100 A 66 66 0 0 1 166 100" fill="none" />
-        <path id="arcBawah" d="M 166 100 A 66 66 0 0 1 34 100" fill="none" />
+        <path id="arcBawah" d="M 36 100 A 64 64 0 0 0 164 100" fill="none" />
       </defs>
 
       <circle cx="100" cy="100" r="95" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -44,7 +44,7 @@ export function Jata({ className, ringkas = false }: { className?: string; ringk
         <path d="M62 131q9.5-6.5 19 0t19 0t19 0t19 0" />
         <path d="M71.5 141q9.5-6.5 19 0t19 0t19 0" opacity=".65" />
       </g>
-      <text x="100" y="160" textAnchor="middle" fontFamily="Marcellus, serif" fontSize="10"
+      <text x="100" y="174" textAnchor="middle" fontFamily="Marcellus, serif" fontSize="10"
             letterSpacing="2.2" fill="currentColor" opacity=".85">11 &#8211; 13 DIS</text>
     </svg>
   );
