@@ -27,12 +27,15 @@ export function Hero() {
             </svg>
             {ACARA.julatTarikh} · {ACARA.tempoh}
           </span>
-          <span className="inline-flex items-center gap-2">
+          <a
+            href={ACARA.pautanPeta} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-2 underline decoration-[rgba(201,150,47,.4)] underline-offset-4 hover:text-tembaga-muda hover:decoration-tembaga-muda"
+          >
             <svg viewBox="0 0 24 24" className="h-[15px] w-[15px] shrink-0 text-tembaga" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z" /><circle cx="12" cy="10" r="2.8" />
             </svg>
-            {ACARA.tempat}, {ACARA.daerah.split(",")[0]}
-          </span>
+            {ACARA.tempat}, {ACARA.daerah.split(",")[0]} — buka peta
+          </a>
         </div>
 
         <div className="muncul d2"><KiraDetik /></div>
