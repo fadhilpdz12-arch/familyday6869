@@ -148,6 +148,7 @@ export interface Cadangan {
   id: string;
   nama: string;
   isi: string;
+  pautan: string | null;
   dibaca: boolean;
   dicipta: string;
 }
