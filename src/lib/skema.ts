@@ -39,6 +39,8 @@ export const skemaBarang = z.object({
 export const skemaCadangan = z.object({
   nama: teksBersih(2, 60),
   isi: teksBersih(5, 600),
+  pautan: z.string().trim().max(300).optional().transform((v) => v || null)
+    .refine((v) => !v || /^https?:\/\//i.test(v), "Pautan mesti mula dengan http:// atau https://"),
 });
 
 export const skemaTugasBaru = z.object({
