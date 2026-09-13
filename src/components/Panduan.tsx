@@ -38,9 +38,16 @@ export function Kaki() {
         <p className="mt-[22px] font-display text-[1.05rem] text-tembaga-muda">
           Semoga dipertemukan dalam keadaan sihat dan bahagia.
         </p>
-        <p className="mt-[26px] text-[12.5px] opacity-60">
-          Diselenggara oleh jawatankuasa Family Day 2026.{" "}
-          <Link href="/ajk" className="underline underline-offset-2 hover:text-tembaga-muda">Panel AJK</Link>
+
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <a href={ACARA.pautanPeta} target="_blank" rel="noreferrer" className="btn btn-garis">
+            📍 Lokasi (Google Maps)
+          </a>
+          <Link href="/ajk" className="btn btn-garis">Panel AJK</Link>
+        </div>
+
+        <p className="mt-6 text-[12.5px] opacity-60">
+          Diselenggara oleh jawatankuasa Family Day 2026.
         </p>
       </div>
     </footer>
