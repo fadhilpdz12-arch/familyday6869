@@ -77,7 +77,9 @@ export function Persiapan({ barang, cadangan }: { barang: Barang[]; cadangan: Ca
           <div className="bg-kerang-terang px-7 py-[30px]">
             <h3 className="mb-1.5 text-[1.4rem]">Kotak cadangan</h3>
             <p className="mb-[18px] text-[14.5px] text-teks-lembut">
-              Idea permainan, menu, atau apa-apa yang patut AJK pertimbang. Semua boleh baca.
+              Idea permainan, menu, atau apa-apa yang patut AJK pertimbang. Semua boleh baca —
+              dan ini untuk <b>semua ahli keluarga</b>, bukan wakil/ketua keluarga sahaja.
+              Jumpa video game menarik? Tampal linknya sekali.
             </p>
             <form action={tindakanCadangan} className="flex flex-col gap-4">
               <Mesej keputusan={hasilCadangan} />
@@ -89,6 +91,11 @@ export function Persiapan({ barang, cadangan }: { barang: Barang[]; cadangan: Ca
                 <label htmlFor="c-isi">Cadangan</label>
                 <textarea id="c-isi" name="isi" required minLength={5} maxLength={600}
                           placeholder="Contoh: buat sesi salasilah keluarga malam kedua, sebab ramai cucu tak kenal sepupu sendiri." />
+              </div>
+              <div className="medan">
+                <label htmlFor="c-pautan">Link rujukan (pilihan)</label>
+                <input id="c-pautan" name="pautan" type="url" maxLength={300}
+                       placeholder="Contoh: link video TikTok game yang anda cadangkan" />
               </div>
               <div><ButangHantar>Hantar cadangan</ButangHantar></div>
             </form>
@@ -103,6 +110,12 @@ export function Persiapan({ barang, cadangan }: { barang: Barang[]; cadangan: Ca
                   <li key={c.id} className="rounded-xl border border-[var(--garis-gelap)] bg-white px-[15px] py-3.5 text-[14.5px]">
                     <b className="mb-0.5 block text-[12.5px] font-bold text-tembaga">{c.nama}</b>
                     {c.isi}
+                    {c.pautan && (
+                      <a href={c.pautan} target="_blank" rel="noreferrer"
+                         className="mt-1.5 block truncate text-[13px] underline underline-offset-2 hover:text-tembaga">
+                        {c.pautan}
+                      </a>
+                    )}
                   </li>
                 ))
               )}
