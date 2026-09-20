@@ -1,9 +1,49 @@
 "use client";
 
 import { useActionState, useRef, useTransition } from "react";
-import { tambahAhli, pindahBiro, buangAhli } from "@/tindakan/pasukan";
+import { tambahAhli, tambahBiro, pindahBiro, buangAhli } from "@/tindakan/pasukan";
 import { ButangHantar, Mesej } from "@/components/ui";
 import type { Ajk, Biro, Tugasan } from "@/lib/database.types";
+
+export function BorangBiro() {
+  const [keputusan, tindakan] = useActionState(tambahBiro, null);
+  const borang = useRef<HTMLFormElement>(null);
+
+  return (
+    <form
+      ref={borang}
+      action={async (d) => {
+        await tindakan(d);
+        borang.current?.reset();
+      }}
+      className="kotak mb-6"
+    >
+      <h2 className="mb-1 text-[1.3rem]">Buka biro baharu</h2>
+      <p className="mb-4 text-sm text-teks-lembut">
+        Kalau ada kerja yang tak masuk mana-mana biro, buka biro baharu di sini. Lepas tu masukkan ahli seperti biasa.
+      </p>
+      <Mesej keputusan={keputusan} />
+      <div className="grid gap-4 sm:grid-cols-[2fr_1fr]">
+        <div className="medan">
+          <label htmlFor="b-nama">Nama biro</label>
+          <input id="b-nama" name="nama" required minLength={2} maxLength={60} placeholder="Contoh: Pengangkutan" />
+        </div>
+        <div className="medan">
+          <label htmlFor="b-kuota">Perlu berapa orang</label>
+          <input id="b-kuota" name="kuota" type="number" required min={1} max={30} defaultValue={2} />
+        </div>
+        <div className="medan sm:col-span-2">
+          <label htmlFor="b-tugas">Tugas biro</label>
+          <textarea
+            id="b-tugas" name="tugas" required minLength={5} maxLength={300} rows={2}
+            placeholder="Contoh: Atur kereta, kumpul senarai tumpang, pastikan semua sampai sebelum Zohor."
+          />
+        </div>
+        <div className="sm:col-span-2"><ButangHantar>Buka biro</ButangHantar></div>
+      </div>
+    </form>
+  );
+}
 
 export function BorangAhli({ biro, biroDicadang }: { biro: Biro[]; biroDicadang?: number }) {
   const [keputusan, tindakan] = useActionState(tambahAhli, null);
