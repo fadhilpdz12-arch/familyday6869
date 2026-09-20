@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// id biro jenis smallint; tiada had 8 lagi sebab Pengerusi boleh tambah biro baharu
+const idBiro = () => z.coerce.number().int().min(1).max(32767);
+
 const teksBersih = (min: number, max: number) =>
   z
     .string()
@@ -46,7 +49,7 @@ export const skemaCadangan = z.object({
 export const skemaTugasBaru = z.object({
   teks: teksBersih(3, 200),
   butiran: z.string().trim().max(1000).optional().transform((v) => v || null),
-  biro_id: z.coerce.number().int().min(1).max(8).optional().nullable(),
+  biro_id: idBiro().optional().nullable(),
   ditugaskan_kepada: z.string().uuid().optional().nullable(),
   keutamaan: z.enum(["rendah", "sederhana", "tinggi", "kritikal"]).default("sederhana"),
   tarikh_akhir: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
@@ -65,9 +68,15 @@ export const skemaKemaskini = z.object({
 
 export const skemaAhliBaru = z.object({
   nama: teksBersih(2, 60),
-  biro_id: z.coerce.number().int().min(1).max(8),
+  biro_id: idBiro(),
   peranan: z.string().trim().max(60).optional().transform((v) => v || null),
   telefon: z.string().trim().max(20).optional().transform((v) => v || null),
+});
+
+export const skemaBiroBaru = z.object({
+  nama: teksBersih(2, 60),
+  tugas: teksBersih(5, 300),
+  kuota: z.coerce.number().int().min(1).max(30),
 });
 
 export const skemaStatusRisiko = z.object({
@@ -94,7 +103,7 @@ export type MasukanKehadiran = z.infer<typeof skemaKehadiran>;
 
 // ------------------------------------------------------- agihan kerja
 export const skemaRancanganBaru = z.object({
-  biro_id: z.coerce.number().int().min(1).max(8),
+  biro_id: idBiro(),
   tajuk: teksBersih(3, 120),
   keterangan: z.string().trim().max(1500).optional().transform((v) => v || null),
   hari: z.coerce.number().int().min(1).max(3).optional().nullable(),
