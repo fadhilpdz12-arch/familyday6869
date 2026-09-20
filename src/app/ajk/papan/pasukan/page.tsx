@@ -1,6 +1,6 @@
 import { muatAsasPanel } from "@/lib/data";
 import { sesiSemasa } from "@/lib/sesi-pelayan";
-import { BorangAhli, BarisAhli } from "@/app/ajk/papan/pasukan/UrusPasukan";
+import { BorangAhli, BorangBiro, BarisAhli } from "@/app/ajk/papan/pasukan/UrusPasukan";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pasukan" };
@@ -22,10 +22,13 @@ export default async function HalamanPasukan() {
       </p>
 
       {pengerusi ? (
-        <BorangAhli biro={biro} />
+        <>
+          <BorangBiro />
+          <BorangAhli biro={biro} />
+        </>
       ) : (
         <p className="mesej mesej-ok mb-9">
-          Hanya Pengerusi boleh tambah atau pindah ahli. Kalau ada cadangan nama, beritahu Huda.
+          Hanya Pengerusi boleh buka biro, tambah atau pindah ahli. Kalau ada cadangan nama, beritahu Huda.
         </p>
       )}
 
