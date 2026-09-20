@@ -52,7 +52,6 @@ export default async function HalamanPasukan() {
                 {senarai.map((a) => (
                   <BarisAhli
                     key={a.id} ahli={a} biro={biro} bolehUrus={pengerusi}
-                    bolehLantikPembantu={akses?.jawatan === "pengerusi"}
                     tugas={tugasan.filter((t) => t.ditugaskan_kepada === a.id)}
                   />
                 ))}

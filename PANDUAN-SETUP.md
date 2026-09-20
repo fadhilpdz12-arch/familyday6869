@@ -99,8 +99,8 @@ Log masuk kat `/ajk` guna nama **Huda** + kata laluan Pengerusi, lepas tu:
 
 | Jawatan | Kata laluan | Boleh buat |
 |---|---|---|
-| Pengerusi (Huda) | Pengerusi | Semua. Lantik/lucut Pembantu Pengerusi. |
-| Pembantu Pengerusi (Hanim) | Pengerusi | Semua, kecuali lantik/lucut Pembantu Pengerusi. |
+| Pengerusi (Huda) | Pengerusi | Semua. |
+| Pembantu Pengerusi (Hanim) | Pengerusi | Semua. |
 | Ketua Biro | AJK | Untuk **biro dia sahaja**: tambah/assign/padam tugas, susun/edit/padam kerja di Agihan Kerja, lantik PIC (ahli biro dia). |
 | Ahli biro Bendahari | AJK | Kemas kini rekod bayaran keluarga. |
 | Ahli | AJK | Tukar status tugas, hantar update harian, urus butiran kerja yang dia jadi PIC. |

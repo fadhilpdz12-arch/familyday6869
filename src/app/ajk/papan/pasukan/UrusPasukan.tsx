@@ -101,14 +101,14 @@ export function BorangAhli({ biro, biroDicadang }: { biro: Biro[]; biroDicadang?
 }
 
 export function BarisAhli({
-  ahli, biro, tugas, bolehUrus, bolehLantikPembantu = false,
+  ahli, biro, tugas, bolehUrus,
 }: {
-  ahli: Ajk; biro: Biro[]; tugas: Tugasan[]; bolehUrus: boolean; bolehLantikPembantu?: boolean;
+  ahli: Ajk; biro: Biro[]; tugas: Tugasan[]; bolehUrus: boolean;
 }) {
   const jawatan: Jawatan = ahli.jawatan ?? (ahli.adalah_pengerusi ? "pengerusi" : "ahli");
-  const pilihanJawatan: Jawatan[] = bolehLantikPembantu || jawatan === "pembantu_pengerusi"
-    ? ["ahli", "ketua_biro", "pembantu_pengerusi"]
-    : ["ahli", "ketua_biro"];
+  // Dropdown hanya Ahli / Ketua Biro. Pengerusi & Pembantu Pengerusi tak boleh ditukar dari sini.
+  const pilihanJawatan: Jawatan[] = ["ahli", "ketua_biro"];
+  const bolehTukarJawatan = jawatan === "ahli" || jawatan === "ketua_biro";
   const [menunggu, mula] = useTransition();
   const siap = tugas.filter((t) => t.status === "selesai").length;
   const tersekat = tugas.filter((t) => t.status === "tersekat").length;
@@ -141,11 +141,11 @@ export function BarisAhli({
 
       {bolehUrus && jawatan !== "pengerusi" && (
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <select
+          {bolehTukarJawatan && <select
             aria-label={`Jawatan ${ahli.nama}`}
             className="rounded-lg border-[1.5px] border-[var(--garis-gelap)] bg-white px-2 py-1 text-[13px]"
             value={jawatan}
-            disabled={menunggu || (jawatan === "pembantu_pengerusi" && !bolehLantikPembantu)}
+            disabled={menunggu}
             onChange={(e) => {
               const nilai = e.target.value as Jawatan;
               if (nilai === "ketua_biro" && !confirm(`Lantik ${ahli.nama} sebagai Ketua Biro? Ketua lama biro ni (kalau ada) akan jadi ahli biasa.`)) return;
@@ -156,7 +156,7 @@ export function BarisAhli({
             }}
           >
             {pilihanJawatan.map((j) => <option key={j} value={j}>{LABEL_JAWATAN[j]}</option>)}
-          </select>
+          </select>}
           <select
             aria-label={`Pindah ${ahli.nama} ke biro lain`}
             className="rounded-lg border-[1.5px] border-[var(--garis-gelap)] bg-white px-2 py-1 text-[13px]"

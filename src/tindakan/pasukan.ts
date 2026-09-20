@@ -88,9 +88,9 @@ export async function ubahKuota(biroId: number, kuota: number): Promise<Keputusa
   return { ok: true, mesej: `Bilangan ahli ditetapkan kepada ${kuota}.` };
 }
 
-const JAWATAN_BOLEH_DIUBAH: Jawatan[] = ["ahli", "ketua_biro", "pembantu_pengerusi"];
+const JAWATAN_BOLEH_DIUBAH: Jawatan[] = ["ahli", "ketua_biro"];
 
-/** Lantik atau lucutkan Ketua Biro / Pembantu Pengerusi. */
+/** Lantik atau lucutkan Ketua Biro. */
 export async function tukarJawatan(id: string, jawatan: Jawatan): Promise<Keputusan> {
   const akses = await aksesSemasa();
   if (!akses?.penuh) return { ok: false, mesej: "Hanya Pengerusi atau Pembantu Pengerusi boleh tukar jawatan." };
@@ -102,9 +102,7 @@ export async function tukarJawatan(id: string, jawatan: Jawatan): Promise<Keputu
 
   const semasa = jawatanDari(sasaran);
   if (semasa === "pengerusi") return { ok: false, mesej: "Jawatan Pengerusi tak boleh ditukar di sini." };
-  if ((jawatan === "pembantu_pengerusi" || semasa === "pembantu_pengerusi") && akses.jawatan !== "pengerusi") {
-    return { ok: false, mesej: "Hanya Pengerusi boleh lantik atau lucutkan Pembantu Pengerusi." };
-  }
+  if (semasa === "pembantu_pengerusi") return { ok: false, mesej: "Jawatan Pembantu Pengerusi tak boleh ditukar di sini." };
 
   // Satu biro seorang ketua: ketua lama jadi ahli biasa
   if (jawatan === "ketua_biro") {
