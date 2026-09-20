@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { laporanHariIni, muatAsasPanel, muatKehadiranPenuh, muatPetugas, muatRancangan, muatRisiko } from "@/lib/data";
-import { sesiSemasa } from "@/lib/sesi-pelayan";
+import { aksesSemasa, bolehUrusBiro } from "@/lib/sesi-pelayan";
 import { KadTugas } from "@/app/ajk/papan/KadTugas";
 import { ACARA, LABEL_HARI } from "@/lib/acara";
 import { LABEL_KEMASKINI, bakiHari, ringgit, tarikhMY } from "@/lib/format";
@@ -9,12 +9,13 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Ringkasan" };
 
 export default async function Ringkasan() {
-  const [{ biro, ajk, tugasan }, harian, { statistik }, risiko, { rancangan, pic }, petugas, sesi] = await Promise.all([
-    muatAsasPanel(), laporanHariIni(), muatKehadiranPenuh(), muatRisiko(), muatRancangan(), muatPetugas(), sesiSemasa(),
+  const [{ biro, ajk, tugasan }, harian, { statistik }, risiko, { rancangan, pic }, petugas, akses] = await Promise.all([
+    muatAsasPanel(), laporanHariIni(), muatKehadiranPenuh(), muatRisiko(), muatRancangan(), muatPetugas(), aksesSemasa(),
   ]);
+  const sesi = akses?.sesi;
 
   const saya = ajk.find((a) => a.id === sesi?.ahliId);
-  const pengerusi = sesi?.peranan === "pengerusi";
+  const pengerusi = akses?.penuh ?? false;
 
   const kerjaSaya = rancangan.filter(
     (r) => pic.some((p) => p.rancangan_id === r.id && p.ajk_id === sesi?.ahliId) && r.status !== "selesai",
@@ -114,7 +115,11 @@ export default async function Ringkasan() {
       ) : (
         <div className="mb-11 grid gap-3 lg:grid-cols-2">
           {tugasSaya.slice(0, 6).map((t) => (
-            <KadTugas key={t.id} tugas={t} ajk={ajk} biro={biro} bolehAssign={pengerusi} />
+            <KadTugas
+              key={t.id} tugas={t} ajk={ajk} biro={biro}
+              bolehAssign={bolehUrusBiro(akses, t.biro_id)}
+              ajkPilihan={pengerusi ? ajk : ajk.filter((a) => a.biro_id === t.biro_id)}
+            />
           ))}
         </div>
       )}

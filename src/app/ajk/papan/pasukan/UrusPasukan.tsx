@@ -1,9 +1,27 @@
 "use client";
 
 import { useActionState, useRef, useTransition } from "react";
-import { tambahAhli, tambahBiro, pindahBiro, buangAhli } from "@/tindakan/pasukan";
+import { tambahAhli, tambahBiro, pindahBiro, buangAhli, ubahKuota, tukarJawatan } from "@/tindakan/pasukan";
+import { LABEL_JAWATAN } from "@/lib/format";
 import { ButangHantar, Mesej } from "@/components/ui";
-import type { Ajk, Biro, Tugasan } from "@/lib/database.types";
+import type { Ajk, Biro, Jawatan, Tugasan } from "@/lib/database.types";
+
+/** Butang − / + untuk bilangan ahli yang diperlukan. */
+export function KawalanKuota({ biro, bilangan }: { biro: Biro; bilangan: number }) {
+  const [menunggu, mula] = useTransition();
+  const ubah = (baru: number) => mula(async () => { await ubahKuota(biro.id, baru); });
+  const butang = "grid h-7 w-7 place-items-center rounded-full border border-[var(--garis-gelap)] bg-white text-[15px] leading-none disabled:opacity-40";
+
+  return (
+    <span className="ml-auto flex items-center gap-2 text-[12.5px] text-teks-lembut">
+      <button type="button" className={butang} disabled={menunggu || biro.kuota <= 1}
+              aria-label={`Kurangkan bilangan ahli ${biro.nama}`} onClick={() => ubah(biro.kuota - 1)}>−</button>
+      <span className="min-w-[36px] text-center">{bilangan}/{biro.kuota}</span>
+      <button type="button" className={butang} disabled={menunggu || biro.kuota >= 30}
+              aria-label={`Tambah bilangan ahli ${biro.nama}`} onClick={() => ubah(biro.kuota + 1)}>+</button>
+    </span>
+  );
+}
 
 export function BorangBiro() {
   const [keputusan, tindakan] = useActionState(tambahBiro, null);
@@ -83,10 +101,14 @@ export function BorangAhli({ biro, biroDicadang }: { biro: Biro[]; biroDicadang?
 }
 
 export function BarisAhli({
-  ahli, biro, tugas, bolehUrus,
+  ahli, biro, tugas, bolehUrus, bolehLantikPembantu = false,
 }: {
-  ahli: Ajk; biro: Biro[]; tugas: Tugasan[]; bolehUrus: boolean;
+  ahli: Ajk; biro: Biro[]; tugas: Tugasan[]; bolehUrus: boolean; bolehLantikPembantu?: boolean;
 }) {
+  const jawatan: Jawatan = ahli.jawatan ?? (ahli.adalah_pengerusi ? "pengerusi" : "ahli");
+  const pilihanJawatan: Jawatan[] = bolehLantikPembantu || jawatan === "pembantu_pengerusi"
+    ? ["ahli", "ketua_biro", "pembantu_pengerusi"]
+    : ["ahli", "ketua_biro"];
   const [menunggu, mula] = useTransition();
   const siap = tugas.filter((t) => t.status === "selesai").length;
   const tersekat = tugas.filter((t) => t.status === "tersekat").length;
@@ -98,6 +120,11 @@ export function BarisAhli({
       </span>
       <div className="min-w-[130px]">
         <b className="text-[15px]">{ahli.nama}</b>
+        {jawatan !== "ahli" && (
+          <span className="ml-2 rounded-full bg-[rgba(201,150,47,.2)] px-2 py-0.5 text-[11px] font-bold text-[#8a6412]">
+            {LABEL_JAWATAN[jawatan]}
+          </span>
+        )}
         {ahli.peranan && <span className="ml-2 text-[12.5px] text-teks-lembut">{ahli.peranan}</span>}
         <div className="text-[12.5px] text-teks-lembut">
           {tugas.length} tugas · {siap} siap
@@ -112,8 +139,24 @@ export function BarisAhli({
         </a>
       )}
 
-      {bolehUrus && (
-        <div className="ml-auto flex items-center gap-2">
+      {bolehUrus && jawatan !== "pengerusi" && (
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <select
+            aria-label={`Jawatan ${ahli.nama}`}
+            className="rounded-lg border-[1.5px] border-[var(--garis-gelap)] bg-white px-2 py-1 text-[13px]"
+            value={jawatan}
+            disabled={menunggu || (jawatan === "pembantu_pengerusi" && !bolehLantikPembantu)}
+            onChange={(e) => {
+              const nilai = e.target.value as Jawatan;
+              if (nilai === "ketua_biro" && !confirm(`Lantik ${ahli.nama} sebagai Ketua Biro? Ketua lama biro ni (kalau ada) akan jadi ahli biasa.`)) return;
+              mula(async () => {
+                const k = await tukarJawatan(ahli.id, nilai);
+                if (!k.ok) alert(k.mesej);
+              });
+            }}
+          >
+            {pilihanJawatan.map((j) => <option key={j} value={j}>{LABEL_JAWATAN[j]}</option>)}
+          </select>
           <select
             aria-label={`Pindah ${ahli.nama} ke biro lain`}
             className="rounded-lg border-[1.5px] border-[var(--garis-gelap)] bg-white px-2 py-1 text-[13px]"

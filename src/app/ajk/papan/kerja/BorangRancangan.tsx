@@ -5,7 +5,9 @@ import { ciptaRancangan } from "@/tindakan/kerja";
 import { ButangHantar, Mesej } from "@/components/ui";
 import type { Biro } from "@/lib/database.types";
 
-export function BorangRancangan({ biro, biroDicadang }: { biro: Biro[]; biroDicadang?: number }) {
+export function BorangRancangan({
+  biro, biroDicadang, biroTetap = false,
+}: { biro: Biro[]; biroDicadang?: number; biroTetap?: boolean }) {
   const [keputusan, tindakan] = useActionState(ciptaRancangan, null);
   const [buka, setBuka] = useState(false);
   const borang = useRef<HTMLFormElement>(null);
@@ -44,10 +46,17 @@ export function BorangRancangan({ biro, biroDicadang }: { biro: Biro[]; biroDica
 
         <div className="medan">
           <label htmlFor="rk-biro">Biro</label>
-          <select id="rk-biro" name="biro_id" required defaultValue={biroDicadang ?? ""}>
-            <option value="" disabled>— Pilih biro —</option>
-            {biro.map((b) => <option key={b.id} value={b.id}>{b.nama}</option>)}
-          </select>
+          {biroTetap ? (
+            <>
+              <input type="hidden" name="biro_id" value={biro[0]?.id ?? ""} />
+              <p className="py-2 text-[14px] font-semibold">{biro[0]?.nama}</p>
+            </>
+          ) : (
+            <select id="rk-biro" name="biro_id" required defaultValue={biroDicadang ?? ""}>
+              <option value="" disabled>— Pilih biro —</option>
+              {biro.map((b) => <option key={b.id} value={b.id}>{b.nama}</option>)}
+            </select>
+          )}
         </div>
 
         <div className="medan">

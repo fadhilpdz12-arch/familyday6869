@@ -95,6 +95,26 @@ Log masuk kat `/ajk` guna nama **Huda** + kata laluan Pengerusi, lepas tu:
 - **Tab Tugas** → tapis "Belum diassign", assign satu-satu pada orangnya.
 - **Tab Pelan Sandaran** → baca sepuluh senario, tukar mana yang tak kena.
 
+### Jawatan dan akses
+
+| Jawatan | Kata laluan | Boleh buat |
+|---|---|---|
+| Pengerusi (Huda) | Pengerusi | Semua. Lantik/lucut Pembantu Pengerusi. |
+| Pembantu Pengerusi (Hanim) | Pengerusi | Semua, kecuali lantik/lucut Pembantu Pengerusi. |
+| Ketua Biro | AJK | Untuk **biro dia sahaja**: tambah/assign/padam tugas, susun/edit/padam kerja di Agihan Kerja, lantik PIC (ahli biro dia). |
+| Ahli biro Bendahari | AJK | Kemas kini rekod bayaran keluarga. |
+| Ahli | AJK | Tukar status tugas, hantar update harian, urus butiran kerja yang dia jadi PIC. |
+
+Rekod bayaran hanya boleh diubah oleh biro Bendahari, Pengerusi dan Pembantu Pengerusi.
+AJK lain masih boleh tengok senarai kehadiran.
+
+Kata laluan Pengerusi hanya boleh digunakan dengan nama Pengerusi atau Pembantu Pengerusi.
+Lantik atau tukar Ketua Biro di **Tab Pasukan** (dropdown jawatan sebelah nama). Butang
+**− / +** pada setiap biro menukar bilangan ahli yang diperlukan.
+
+Jalankan migrasi `20260104000000_jawatan_ketua_biro.sql` (`npm run db:push`) **sebelum**
+deploy kod baharu.
+
 ---
 
 ## 6. Hebahkan pada AJK (5 minit)

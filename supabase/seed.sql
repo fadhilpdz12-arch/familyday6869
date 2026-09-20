@@ -3,28 +3,33 @@
 -- =====================================================================
 
 insert into biro (id, nama, tugas, kuota, urutan) values
- (1,'Pengerusi','Pantau semua biro, sahkan keputusan besar, kejar yang tersekat.',1,1),
+ (1,'Pengerusi','Pantau semua biro, sahkan keputusan besar, kejar yang tersekat.',2,1),
  (2,'Bendahari','Kutip duit, simpan resit, jaga baki supaya tak terlebih belanja.',2,2),
  (3,'Tempat & Logistik','Urus chalet, susun bilik, semak kelengkapan masa masuk dan sebelum balik.',4,3),
  (4,'Makanan & Minuman','Rancang menu lima sesi makan, beli barang, jaga bajet dapur.',5,4),
  (5,'Aktiviti & Permainan','Susun sukaneka besar kecil, sediakan alatan, beli hadiah.',5,5),
  (6,'Dokumentasi & Publisiti','Rakam gambar dan video, kumpul semua dalam satu folder Drive.',3,6),
  (7,'Keselamatan & Kebajikan','Jaga budak-budak terutama kat kolam, sedia peti kecemasan.',3,7),
- (8,'Protokol & Ibadah','Ingatkan waktu solat, sediakan tempat berjemaah, uruskan sesi ucapan.',2,8);
+ (8,'Protokol & Ibadah','Ingatkan waktu solat, sediakan tempat berjemaah, uruskan sesi ucapan.',3,8);
 
-insert into ajk (biro_id, nama, peranan, urutan, adalah_pengerusi) values
- (1,'Huda',      null,            1, true),
- (2,'Saadah',    null,            1, false),
- (3,'Irfan',     null,            1, false),
- (3,'Alesya',    null,            2, false),
- (4,'Ciksu',     null,            1, false),
- (4,'Cikteh',    null,            2, false),
- (4,'Aqil',      null,            3, false),
- (4,'Kak Farah', 'dengan Hafiz',  4, false),
- (4,'Abe Awi',   'BBQ',           5, false),
- (5,'Makdo',     'hadiah',        1, false),
- (5,'Zieka',     'hadiah',        2, false),
- (7,'Pakdo',     null,            1, false);
+insert into ajk (biro_id, nama, peranan, urutan, adalah_pengerusi, jawatan) values
+ (1,'Huda',      null,            1, true,  'pengerusi'),
+ (1,'Hanim',     null,            2, false, 'pembantu_pengerusi'),
+ (2,'Saadah',    null,            1, false, 'ahli'),
+ (3,'Irfan',     null,            1, false, 'ketua_biro'),
+ (3,'Alesya',    null,            2, false, 'ahli'),
+ (4,'Ciksu',     null,            1, false, 'ketua_biro'),
+ (4,'Cikteh',    null,            2, false, 'ahli'),
+ (4,'Aqil',      null,            3, false, 'ahli'),
+ (4,'Kak Farah', 'dengan Hafiz',  4, false, 'ahli'),
+ (4,'Abe Awi',   'BBQ',           5, false, 'ahli'),
+ (5,'Hidayah',   null,            1, false, 'ketua_biro'),
+ (5,'Makdo',     'hadiah',        2, false, 'ahli'),
+ (5,'Zieka',     'hadiah',        3, false, 'ahli'),
+ (6,'Fadhil',    null,            1, false, 'ketua_biro'),
+ (7,'Danial',    null,            1, false, 'ketua_biro'),
+ (7,'Pakdo',     null,            2, false, 'ahli'),
+ (8,'Poklong',   null,            1, false, 'ketua_biro');
 
 -- ------------------------------------------------------------ tentatif
 insert into tentatif (hari, masa, tajuk, keterangan, tag, ibadah, draf, urutan) values

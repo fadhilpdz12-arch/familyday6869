@@ -6,19 +6,28 @@ import { ringgit } from "@/lib/format";
 import type { Kehadiran } from "@/lib/database.types";
 
 export function BarisKehadiran({
-  rekod, labelStatus, labelBilik, bolehPadam,
+  rekod, labelStatus, labelBilik, bolehPadam, bolehBayar,
 }: {
   rekod: Kehadiran;
   labelStatus: string;
   labelBilik: string;
   bolehPadam: boolean;
+  bolehBayar: boolean;
 }) {
   const [bayar, setBayar] = useState(rekod.sudah_bayar);
   const [jumlah, setJumlah] = useState(Number(rekod.jumlah_bayar));
   const [menunggu, mulaTransisi] = useTransition();
 
   const simpan = (sudah: boolean, nilai: number) =>
-    mulaTransisi(async () => { await kemasBayaran(rekod.id, sudah, nilai); });
+    mulaTransisi(async () => {
+      const k = await kemasBayaran(rekod.id, sudah, nilai);
+      if (!k.ok) {
+        // pulangkan nilai asal kalau server tolak
+        setBayar(rekod.sudah_bayar);
+        setJumlah(Number(rekod.jumlah_bayar));
+        alert(k.mesej);
+      }
+    });
 
   return (
     <tr className="border-b border-[var(--garis-gelap)] align-top">
@@ -40,7 +49,7 @@ export function BarisKehadiran({
       <td className="px-2 py-3">
         <div className="flex items-center gap-2">
           <input
-            type="checkbox" className="tanda" checked={bayar} disabled={menunggu}
+            type="checkbox" className="tanda" checked={bayar} disabled={menunggu || !bolehBayar}
             aria-label={`Tanda bayaran ${rekod.nama_keluarga}`}
             onChange={(e) => {
               const sudah = e.target.checked;
@@ -49,7 +58,7 @@ export function BarisKehadiran({
             }}
           />
           <input
-            type="number" min={0} step={10} value={jumlah} disabled={menunggu}
+            type="number" min={0} step={10} value={jumlah} disabled={menunggu || !bolehBayar}
             aria-label={`Jumlah dibayar oleh ${rekod.nama_keluarga}`}
             onChange={(e) => setJumlah(Number(e.target.value))}
             onBlur={() => simpan(bayar, jumlah)}

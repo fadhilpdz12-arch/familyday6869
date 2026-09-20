@@ -64,7 +64,10 @@ export interface Ajk {
   telefon: string | null;
   adalah_pengerusi: boolean;
   aktif: boolean;
+  jawatan: Jawatan;
 }
+
+export type Jawatan = "pengerusi" | "pembantu_pengerusi" | "ketua_biro" | "ahli";
 
 export interface Tentatif {
   id: string;

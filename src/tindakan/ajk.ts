@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { supabasePentadbir } from "@/lib/supabase/pelayan";
 import { envPelayan } from "@/lib/persekitaran";
 import { ciptaToken, NAMA_KUKI, pilihanKuki, samaMasaTetap } from "@/lib/sesi";
-import { sesiPengerusi } from "@/lib/sesi-pelayan";
+import { aksesSemasa, bolehUrusBayaran, jawatanDari, sesiPengerusi } from "@/lib/sesi-pelayan";
 import { skemaBayaran, skemaLogMasukAjk } from "@/lib/skema";
 import type { Keputusan } from "@/tindakan/jenis";
 
@@ -17,7 +17,7 @@ export async function logMasuk(_sebelum: Keputusan | null, data: FormData): Prom
   }
 
   const { data: ahli } = await supabasePentadbir()
-    .from("ajk").select("id, nama, aktif").eq("id", semakan.data.ahli_id).maybeSingle();
+    .from("ajk").select("*").eq("id", semakan.data.ahli_id).maybeSingle();
 
   if (!ahli || !ahli.aktif) return { ok: false, mesej: "Nama tu tiada dalam senarai AJK aktif." };
 
@@ -34,6 +34,12 @@ export async function logMasuk(_sebelum: Keputusan | null, data: FormData): Prom
     return { ok: false, mesej: "Kata laluan salah." };
   }
 
+  // Kata laluan Pengerusi hanya sah untuk Pengerusi dan Pembantu Pengerusi
+  const jawatan = jawatanDari(ahli);
+  if (peranan === "pengerusi" && jawatan !== "pengerusi" && jawatan !== "pembantu_pengerusi") {
+    return { ok: false, mesej: "Kata laluan ni hanya untuk Pengerusi dan Pembantu Pengerusi. Guna kata laluan AJK." };
+  }
+
   const kuki = await cookies();
   kuki.set(NAMA_KUKI, await ciptaToken({ peranan, ahliId: ahli.id }, env.RAHSIA_SESI), pilihanKuki);
   redirect("/ajk/papan");
@@ -46,10 +52,10 @@ export async function logKeluar(): Promise<void> {
 }
 
 export async function kemasBayaran(id: string, sudah_bayar: boolean, jumlah_bayar: number): Promise<Keputusan> {
-  if (!(await sesiPengerusi())) {
-    // Bendahari pun perlu — jadi benarkan sesiapa yang dah log masuk
-    const { sesiSemasa } = await import("@/lib/sesi-pelayan");
-    if (!(await sesiSemasa())) return { ok: false, mesej: "Sesi dah tamat." };
+  const akses = await aksesSemasa();
+  if (!akses) return { ok: false, mesej: "Sesi dah tamat. Log masuk semula." };
+  if (!(await bolehUrusBayaran(akses))) {
+    return { ok: false, mesej: "Hanya biro Bendahari, Pengerusi dan Pembantu Pengerusi boleh ubah rekod bayaran." };
   }
 
   const semakan = skemaBayaran.safeParse({ id, sudah_bayar, jumlah_bayar });

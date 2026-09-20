@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { supabasePentadbir } from "@/lib/supabase/pelayan";
 import { skemaAhliBaru, skemaBiroBaru } from "@/lib/skema";
-import { sesiPengerusi } from "@/lib/sesi-pelayan";
+import { aksesSemasa, jawatanDari, sesiPengerusi } from "@/lib/sesi-pelayan";
+import type { Jawatan } from "@/lib/database.types";
 import type { Keputusan } from "@/tindakan/jenis";
 
 function segarkan() {
@@ -76,10 +77,57 @@ export async function tambahAhli(_sebelum: Keputusan | null, data: FormData): Pr
   return { ok: true, mesej: `${semakan.data.nama} dah masuk pasukan.` };
 }
 
+/** Pengerusi / Pembantu: tambah atau kurangkan bilangan ahli yang diperlukan dalam satu biro. */
+export async function ubahKuota(biroId: number, kuota: number): Promise<Keputusan> {
+  if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi atau Pembantu Pengerusi boleh ubah bilangan ahli." };
+  if (!Number.isInteger(kuota) || kuota < 1 || kuota > 30) return { ok: false, mesej: "Bilangan ahli mesti antara 1 hingga 30." };
+
+  const { error } = await supabasePentadbir().from("biro").update({ kuota }).eq("id", biroId);
+  if (error) return { ok: false, mesej: "Tak dapat ubah bilangan ahli." };
+  segarkan();
+  return { ok: true, mesej: `Bilangan ahli ditetapkan kepada ${kuota}.` };
+}
+
+const JAWATAN_BOLEH_DIUBAH: Jawatan[] = ["ahli", "ketua_biro", "pembantu_pengerusi"];
+
+/** Lantik atau lucutkan Ketua Biro / Pembantu Pengerusi. */
+export async function tukarJawatan(id: string, jawatan: Jawatan): Promise<Keputusan> {
+  const akses = await aksesSemasa();
+  if (!akses?.penuh) return { ok: false, mesej: "Hanya Pengerusi atau Pembantu Pengerusi boleh tukar jawatan." };
+  if (!JAWATAN_BOLEH_DIUBAH.includes(jawatan)) return { ok: false, mesej: "Jawatan tak sah." };
+
+  const sb = supabasePentadbir();
+  const { data: sasaran } = await sb.from("ajk").select("*").eq("id", id).maybeSingle();
+  if (!sasaran) return { ok: false, mesej: "Ahli tak jumpa." };
+
+  const semasa = jawatanDari(sasaran);
+  if (semasa === "pengerusi") return { ok: false, mesej: "Jawatan Pengerusi tak boleh ditukar di sini." };
+  if ((jawatan === "pembantu_pengerusi" || semasa === "pembantu_pengerusi") && akses.jawatan !== "pengerusi") {
+    return { ok: false, mesej: "Hanya Pengerusi boleh lantik atau lucutkan Pembantu Pengerusi." };
+  }
+
+  // Satu biro seorang ketua: ketua lama jadi ahli biasa
+  if (jawatan === "ketua_biro") {
+    await sb.from("ajk").update({ jawatan: "ahli" })
+      .eq("biro_id", sasaran.biro_id).eq("jawatan", "ketua_biro").neq("id", id);
+  }
+
+  const { error } = await sb.from("ajk").update({ jawatan }).eq("id", id);
+  if (error) return { ok: false, mesej: "Tak dapat tukar jawatan." };
+  segarkan();
+  return { ok: true, mesej: "Jawatan dikemas kini." };
+}
+
 /** Pindahkan seorang AJK ke biro lain. */
 export async function pindahBiro(id: string, biroId: number): Promise<Keputusan> {
   if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi boleh pindah ahli." };
-  const { error } = await supabasePentadbir().from("ajk").update({ biro_id: biroId }).eq("id", id);
+  const sb = supabasePentadbir();
+  const { data: ahli } = await sb.from("ajk").select("*").eq("id", id).maybeSingle();
+  if (!ahli) return { ok: false, mesej: "Ahli tak jumpa." };
+
+  // Ketua yang dipindah tak lagi jadi ketua di biro baru
+  const kemaskini = jawatanDari(ahli) === "ketua_biro" ? { biro_id: biroId, jawatan: "ahli" as const } : { biro_id: biroId };
+  const { error } = await sb.from("ajk").update(kemaskini).eq("id", id);
   if (error) return { ok: false, mesej: "Tak dapat pindah." };
   segarkan();
   return { ok: true, mesej: "Dah dipindah." };
@@ -87,6 +135,8 @@ export async function pindahBiro(id: string, biroId: number): Promise<Keputusan>
 
 export async function buangAhli(id: string): Promise<Keputusan> {
   if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi boleh buang ahli." };
+  const { data: ahli } = await supabasePentadbir().from("ajk").select("*").eq("id", id).maybeSingle();
+  if (ahli && jawatanDari(ahli) === "pengerusi") return { ok: false, mesej: "Pengerusi tak boleh dikeluarkan." };
   // Tugas dia tak dipadam — cuma jadi tiada penerima, supaya boleh diassign semula
   const { error } = await supabasePentadbir().from("ajk").update({ aktif: false }).eq("id", id);
   if (error) return { ok: false, mesej: "Tak dapat buang." };

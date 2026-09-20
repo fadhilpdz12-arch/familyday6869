@@ -1,5 +1,5 @@
 import { muatAsasPanel } from "@/lib/data";
-import { sesiSemasa } from "@/lib/sesi-pelayan";
+import { aksesSemasa, bolehUrusBiro } from "@/lib/sesi-pelayan";
 import { KadTugas } from "@/app/ajk/papan/KadTugas";
 import { BorangTugas } from "@/app/ajk/papan/tugas/BorangTugas";
 import { LABEL_TUGAS } from "@/lib/format";
@@ -15,11 +15,15 @@ export default async function HalamanTugas({
 }: {
   searchParams: Promise<{ biro?: string; orang?: string }>;
 }) {
-  const [{ biro, ajk, tugasan }, sesi, tapis] = await Promise.all([
-    muatAsasPanel(), sesiSemasa(), searchParams,
+  const [{ biro, ajk, tugasan }, akses, tapis] = await Promise.all([
+    muatAsasPanel(), aksesSemasa(), searchParams,
   ]);
+  const sesi = akses?.sesi;
 
-  const pengerusi = sesi?.peranan === "pengerusi";
+  // Ketua Biro hanya nampak biro dan ahli dia sendiri dalam borang
+  const biroBoleh = akses?.penuh ? biro : biro.filter((b) => b.id === akses?.biroKetua);
+  const ajkBoleh = akses?.penuh ? ajk : ajk.filter((a) => a.biro_id === akses?.biroKetua);
+  const bolehTambah = biroBoleh.length > 0;
   const ditapis = tugasan.filter((t) => {
     if (tapis.biro && String(t.biro_id) !== tapis.biro) return false;
     if (tapis.orang === "saya" && t.ditugaskan_kepada !== sesi?.ahliId) return false;
@@ -37,12 +41,18 @@ export default async function HalamanTugas({
         {belumAssign > 0 && <span className="text-tanah"> {belumAssign} lagi belum ada orang pegang.</span>}
       </p>
 
-      {pengerusi && <BorangTugas ajk={ajk} biro={biro} />}
+      {bolehTambah && <BorangTugas ajk={ajkBoleh} biro={biroBoleh} biroTetap={!akses?.penuh} />}
 
       <div className="mb-7 flex flex-wrap gap-2 text-[13px]">
         <a href="/ajk/papan/tugas" className={`btn btn-halus ${!tapis.biro && !tapis.orang ? "border-tembaga" : ""}`}>Semua</a>
         <a href="/ajk/papan/tugas?orang=saya" className={`btn btn-halus ${tapis.orang === "saya" ? "border-tembaga" : ""}`}>Tugas saya</a>
         <a href="/ajk/papan/tugas?orang=kosong" className={`btn btn-halus ${tapis.orang === "kosong" ? "border-tembaga" : ""}`}>Belum diassign</a>
+        {akses?.biroKetua && (
+          <a href={`/ajk/papan/tugas?biro=${akses.biroKetua}`}
+             className={`btn btn-halus ${tapis.biro === String(akses.biroKetua) ? "border-tembaga" : ""}`}>
+            Biro saya
+          </a>
+        )}
         {biro.map((b) => (
           <a key={b.id} href={`/ajk/papan/tugas?biro=${b.id}`}
              className={`btn btn-halus ${tapis.biro === String(b.id) ? "border-tembaga" : ""}`}>
@@ -67,7 +77,11 @@ export default async function HalamanTugas({
                   </p>
                 ) : (
                   senarai.map((t) => (
-                    <KadTugas key={t.id} tugas={t} ajk={ajk} biro={biro} bolehAssign={pengerusi} />
+                    <KadTugas
+                      key={t.id} tugas={t} ajk={ajk} biro={biro}
+                      bolehAssign={bolehUrusBiro(akses, t.biro_id)}
+                      ajkPilihan={akses?.penuh ? ajk : ajk.filter((a) => a.biro_id === t.biro_id)}
+                    />
                   ))
                 )}
               </div>

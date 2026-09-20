@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { sesiSemasa } from "@/lib/sesi-pelayan";
+import { aksesSemasa } from "@/lib/sesi-pelayan";
+import { LABEL_JAWATAN } from "@/lib/format";
 import { supabasePentadbir } from "@/lib/supabase/pelayan";
 import { logKeluar } from "@/tindakan/ajk";
 import { TabPanel } from "@/app/ajk/papan/TabPanel";
@@ -8,11 +9,15 @@ import { TabPanel } from "@/app/ajk/papan/TabPanel";
 export const dynamic = "force-dynamic";
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
-  const sesi = await sesiSemasa();
-  if (!sesi) redirect("/ajk");
+  const akses = await aksesSemasa();
+  if (!akses) redirect("/ajk");
 
-  const { data: ahli } = await supabasePentadbir()
-    .from("ajk").select("nama").eq("id", sesi.ahliId).maybeSingle();
+  const { data: biroKetua } = akses.biroKetua
+    ? await supabasePentadbir().from("biro").select("nama").eq("id", akses.biroKetua).maybeSingle()
+    : { data: null };
+  const labelJawatan = akses.jawatan === "ketua_biro" && biroKetua
+    ? `Ketua ${biroKetua.nama}`
+    : akses.jawatan !== "ahli" ? LABEL_JAWATAN[akses.jawatan] : null;
 
   return (
     <div className="min-h-dvh bg-kerang pb-20">
@@ -20,10 +25,10 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         <div className="wrap flex h-[58px] items-center gap-4">
           <b className="font-display text-[15px] font-normal text-kerang">Panel AJK</b>
           <span className="ml-auto truncate text-[13px] text-atas-gelap-lembut">
-            {ahli?.nama ?? "AJK"}
-            {sesi.peranan === "pengerusi" && (
+            {akses.nama}
+            {labelJawatan && (
               <span className="ml-2 rounded-full bg-tembaga px-2 py-0.5 text-[11px] font-bold text-lagun-dalam">
-                Pengerusi
+                {labelJawatan}
               </span>
             )}
           </span>

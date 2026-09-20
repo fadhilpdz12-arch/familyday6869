@@ -1,6 +1,6 @@
 import type {
   JenisKemaskini, KeperluanBilik, Keutamaan, PerananHari, StatusHadir, StatusRancangan,
-  StatusRisiko, StatusTugas, Tahap, WaktuTiba,
+  StatusRisiko, StatusTugas, Tahap, WaktuTiba, Jawatan,
 } from "@/lib/database.types";
 
 export const LABEL_STATUS: Record<StatusHadir, string> = {
@@ -135,3 +135,10 @@ export function labelBakiHari(tarikh: string): { teks: string; bahaya: boolean }
   if (n <= 7) return { teks: `${n} hari lagi`, bahaya: true };
   return { teks: `${n} hari lagi`, bahaya: false };
 }
+
+export const LABEL_JAWATAN: Record<Jawatan, string> = {
+  pengerusi: "Pengerusi",
+  pembantu_pengerusi: "Pembantu Pengerusi",
+  ketua_biro: "Ketua Biro",
+  ahli: "Ahli",
+};

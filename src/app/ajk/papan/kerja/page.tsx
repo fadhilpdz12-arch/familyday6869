@@ -1,5 +1,5 @@
 import { muatAsasPanel, muatPetugas, muatRancangan, muatRisiko } from "@/lib/data";
-import { sesiSemasa } from "@/lib/sesi-pelayan";
+import { aksesSemasa, bolehUrusBiro } from "@/lib/sesi-pelayan";
 import { BorangRancangan } from "@/app/ajk/papan/kerja/BorangRancangan";
 import { JadualPetugas } from "@/app/ajk/papan/kerja/JadualPetugas";
 import { KadRancangan } from "@/app/ajk/papan/kerja/KadRancangan";
@@ -13,11 +13,12 @@ export default async function HalamanKerja({
 }: {
   searchParams: Promise<{ biro?: string }>;
 }) {
-  const [{ biro, ajk }, { rancangan, pautan, pic, bahan }, petugas, risiko, sesi, tapis] = await Promise.all([
-    muatAsasPanel(), muatRancangan(), muatPetugas(), muatRisiko(), sesiSemasa(), searchParams,
+  const [{ biro, ajk }, { rancangan, pautan, pic, bahan }, petugas, risiko, akses, tapis] = await Promise.all([
+    muatAsasPanel(), muatRancangan(), muatPetugas(), muatRisiko(), aksesSemasa(), searchParams,
   ]);
 
-  const pengerusi = sesi?.peranan === "pengerusi";
+  const pengerusi = akses?.penuh ?? false;
+  const biroBoleh = pengerusi ? biro : biro.filter((b) => b.id === akses?.biroKetua);
   const ditapis = tapis.biro ? rancangan.filter((r) => String(r.biro_id) === tapis.biro) : rancangan;
 
   const belumAdaPic = rancangan.filter((r) => !pic.some((p) => p.rancangan_id === r.id)).length;
@@ -27,7 +28,7 @@ export default async function HalamanKerja({
     <main className="wrap pt-9">
       <h1 className="mb-1 text-[clamp(1.7rem,5vw,2.2rem)]">Agihan Kerja</h1>
       <p className="mb-2 max-w-[68ch] text-sm text-teks-lembut">
-        Sini tempat Pengerusi agihkan kerja terperinci untuk setiap biro — lengkap dengan pautan rujukan
+        Sini tempat Pengerusi dan Ketua Biro agihkan kerja terperinci untuk setiap biro — lengkap dengan pautan rujukan
         (cth: video game), senarai bahan, siapa PIC, dan pelan sandaran kalau ada halangan macam hujan.
         Siapa emcee dan PIC keseluruhan untuk setiap hari pun ditetapkan kat sini.
       </p>
@@ -51,10 +52,18 @@ export default async function HalamanKerja({
         <h2 className="text-[1.4rem]">Kerja & aktiviti ikut biro</h2>
       </div>
 
-      {pengerusi && <BorangRancangan biro={biro} biroDicadang={Number(tapis.biro) || undefined} />}
+      {biroBoleh.length > 0 && (
+        <BorangRancangan biro={biroBoleh} biroDicadang={Number(tapis.biro) || undefined} biroTetap={!pengerusi} />
+      )}
 
       <div className="mb-7 flex flex-wrap gap-2 text-[13px]">
         <a href="/ajk/papan/kerja" className={`btn btn-halus ${!tapis.biro ? "border-tembaga" : ""}`}>Semua biro</a>
+        {akses?.biroKetua && (
+          <a href={`/ajk/papan/kerja?biro=${akses.biroKetua}`}
+             className={`btn btn-halus ${tapis.biro === String(akses.biroKetua) ? "border-tembaga" : ""}`}>
+            Biro saya
+          </a>
+        )}
         {biro.map((b) => (
           <a key={b.id} href={`/ajk/papan/kerja?biro=${b.id}`}
              className={`btn btn-halus ${tapis.biro === String(b.id) ? "border-tembaga" : ""}`}>
@@ -66,7 +75,7 @@ export default async function HalamanKerja({
       {ditapis.length === 0 ? (
         <p className="kotak text-teks-lembut">
           Belum ada kerja disusun {tapis.biro ? "untuk biro ni" : "lagi"}.
-          {pengerusi && " Guna butang di atas untuk mula tambah."}
+          {biroBoleh.length > 0 && " Guna butang di atas untuk mula tambah."}
         </p>
       ) : (
         <div className="grid gap-5 lg:grid-cols-2">
@@ -79,8 +88,9 @@ export default async function HalamanKerja({
               bahan={bahan.filter((b) => b.rancangan_id === r.id)}
               risikoKait={risiko.filter((x) => x.rancangan_id === r.id)}
               ajkSemua={ajk}
-              pengerusi={pengerusi}
-              bolehUrusItem={pengerusi || pic.some((p) => p.rancangan_id === r.id && p.ajk_id === sesi?.ahliId)}
+              ajkPilihan={pengerusi ? ajk : ajk.filter((a) => a.biro_id === r.biro_id)}
+              pengurus={bolehUrusBiro(akses, r.biro_id)}
+              bolehUrusItem={bolehUrusBiro(akses, r.biro_id) || pic.some((p) => p.rancangan_id === r.id && p.ajk_id === akses?.ahliId)}
             />
           ))}
         </div>

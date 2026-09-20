@@ -5,7 +5,7 @@ import { ciptaTugas } from "@/tindakan/tugas";
 import { ButangHantar, Mesej } from "@/components/ui";
 import type { Ajk, Biro } from "@/lib/database.types";
 
-export function BorangTugas({ ajk, biro }: { ajk: Ajk[]; biro: Biro[] }) {
+export function BorangTugas({ ajk, biro, biroTetap = false }: { ajk: Ajk[]; biro: Biro[]; biroTetap?: boolean }) {
   const [keputusan, tindakan] = useActionState(ciptaTugas, null);
   const [buka, setBuka] = useState(false);
   const borang = useRef<HTMLFormElement>(null);
@@ -40,10 +40,17 @@ export function BorangTugas({ ajk, biro }: { ajk: Ajk[]; biro: Biro[] }) {
 
         <div className="medan">
           <label htmlFor="t-biro">Biro</label>
-          <select id="t-biro" name="biro_id" defaultValue="">
-            <option value="">— Tiada biro —</option>
-            {biro.map((b) => <option key={b.id} value={b.id}>{b.nama}</option>)}
-          </select>
+          {biroTetap ? (
+            <>
+              <input type="hidden" name="biro_id" value={biro[0]?.id ?? ""} />
+              <p className="py-2 text-[14px] font-semibold">{biro[0]?.nama}</p>
+            </>
+          ) : (
+            <select id="t-biro" name="biro_id" defaultValue="">
+              <option value="">— Tiada biro —</option>
+              {biro.map((b) => <option key={b.id} value={b.id}>{b.nama}</option>)}
+            </select>
+          )}
         </div>
 
         <div className="medan">

@@ -16,7 +16,7 @@ import type {
 const STATUS: StatusRancangan[] = ["belum_mula", "sedang_disiapkan", "sedia", "selesai"];
 
 export function KadRancangan({
-  rancangan, pautan, pic, bahan, risikoKait, ajkSemua, pengerusi, bolehUrusItem,
+  rancangan, pautan, pic, bahan, risikoKait, ajkSemua, ajkPilihan, pengurus, bolehUrusItem,
 }: {
   rancangan: RancanganKerja;
   pautan: RancanganPautan[];
@@ -24,7 +24,10 @@ export function KadRancangan({
   bahan: RancanganBahan[];
   risikoKait: Risiko[];
   ajkSemua: Ajk[];
-  pengerusi: boolean;
+  /** Nama yang boleh dipilih sebagai PIC. Lalai: semua AJK. */
+  ajkPilihan?: Ajk[];
+  /** Pengerusi, Pembantu Pengerusi, atau Ketua biro kerja ni */
+  pengurus: boolean;
   bolehUrusItem: boolean;
 }) {
   const [menunggu, mula] = useTransition();
@@ -76,7 +79,7 @@ export function KadRancangan({
           return (
             <span key={p.id} className="inline-flex items-center gap-1 rounded-full bg-[rgba(201,150,47,.14)] px-2.5 py-0.5 text-[12px] font-medium text-[#8a6412]">
               {orang?.nama ?? "?"}{p.peranan ? ` · ${p.peranan}` : ""}
-              {pengerusi && (
+              {pengurus && (
                 <button
                   type="button" aria-label={`Keluarkan ${orang?.nama} sebagai PIC`}
                   disabled={menunggu}
@@ -90,7 +93,7 @@ export function KadRancangan({
           );
         })}
       </div>
-      {pengerusi && <FormPic rancanganId={rancangan.id} ajkSemua={ajkSemua} pic={pic} />}
+      {pengurus && <FormPic rancanganId={rancangan.id} ajkSemua={ajkPilihan ?? ajkSemua} pic={pic} />}
 
       {/* --- pautan rujukan --- */}
       {(pautan.length > 0 || bolehUrusItem) && (
@@ -153,7 +156,7 @@ export function KadRancangan({
       )}
 
       {/* --- pelan sandaran khusus kerja ni --- */}
-      {(rancangan.pelan_sandaran || pengerusi) && (
+      {(rancangan.pelan_sandaran || pengurus) && (
         <div className="mb-3 rounded-lg border border-[rgba(168,67,47,.3)] bg-[rgba(168,67,47,.05)] p-3">
           <span className="mb-1 block text-[12px] font-bold uppercase tracking-wide text-[#8a3524]">Pelan sandaran</span>
           {rancangan.pelan_sandaran ? (
@@ -174,7 +177,7 @@ export function KadRancangan({
         </p>
       )}
 
-      {pengerusi && (
+      {pengurus && (
         <div className="flex flex-wrap gap-3 border-t border-[var(--garis-gelap)] pt-3">
           <button type="button" onClick={() => tetapkanBuangan((v) => !v)} className="text-[12.5px] underline underline-offset-2 hover:text-tembaga">
             {buangan ? "Tutup edit" : "Edit kerja ni"}

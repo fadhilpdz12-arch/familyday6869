@@ -24,7 +24,12 @@ export function SenaraiAjk({ biro, ahli }: { biro: Biro[]; ahli: Ajk[] }) {
 
         <div className="grid gap-px bg-[rgba(201,150,47,.16)] sm:grid-cols-2 lg:grid-cols-3">
           {biro.map((b) => {
-            const senarai = ahli.filter((a) => a.biro_id === b.id).sort((x, y) => x.urutan - y.urutan);
+            const senarai = ahli.filter((a) => a.biro_id === b.id).sort(
+              // ketua dan pembantu dipaparkan dulu
+              (x, y) => Number(y.jawatan === "ketua_biro" || y.jawatan === "pembantu_pengerusi")
+                      - Number(x.jawatan === "ketua_biro" || x.jawatan === "pembantu_pengerusi")
+                      || x.urutan - y.urutan,
+            );
             const kosong = Math.max(b.kuota - senarai.length, 0);
             return (
               <article key={b.id} className="bg-lagun px-[22px] py-6">
@@ -48,6 +53,11 @@ export function SenaraiAjk({ biro, ahli }: { biro: Biro[]; ahli: Ajk[] }) {
                         {inisial(a.nama)}
                       </span>
                       {a.nama}
+                      {(a.jawatan === "ketua_biro" || a.jawatan === "pembantu_pengerusi") && (
+                        <span className="rounded-full border border-tembaga px-2 py-px text-[11px] font-bold text-tembaga-muda">
+                          {a.jawatan === "ketua_biro" ? "Ketua" : "Pembantu Pengerusi"}
+                        </span>
+                      )}
                       {a.peranan && <span className="ml-1 text-[12.5px] text-atas-gelap-lembut">{a.peranan}</span>}
                     </li>
                   ))}

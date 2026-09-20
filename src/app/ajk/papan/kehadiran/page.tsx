@@ -1,5 +1,5 @@
 import { muatKehadiranPenuh } from "@/lib/data";
-import { sesiSemasa } from "@/lib/sesi-pelayan";
+import { aksesSemasa, bolehUrusBayaran } from "@/lib/sesi-pelayan";
 import { BarisKehadiran } from "@/app/ajk/papan/kehadiran/BarisKehadiran";
 import { LABEL_BILIK, LABEL_STATUS, ringgit } from "@/lib/format";
 import { ACARA } from "@/lib/acara";
@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Kehadiran" };
 
 export default async function HalamanKehadiran() {
-  const [{ kehadiran, statistik }, sesi] = await Promise.all([muatKehadiranPenuh(), sesiSemasa()]);
+  const [{ kehadiran, statistik }, akses] = await Promise.all([muatKehadiranPenuh(), aksesSemasa()]);
+  const bolehBayar = await bolehUrusBayaran(akses);
 
   const belumBayar = kehadiran.filter((k) => k.status !== "tidak_hadir" && !k.sudah_bayar);
   const tertunggak = belumBayar.reduce((a, k) => a + Number(k.yuran), 0);
@@ -40,6 +41,11 @@ export default async function HalamanKehadiran() {
         <h2 className="text-[1.4rem]">Senarai penuh</h2>
         <a href="/ajk/papan/kehadiran/eksport" className="btn btn-halus" download>Muat turun CSV</a>
       </div>
+      {!bolehBayar && (
+        <p className="mesej mesej-ok mb-5">
+          Rekod bayaran hanya boleh dikemas kini oleh biro Bendahari, Pengerusi dan Pembantu Pengerusi.
+        </p>
+      )}
 
       {kehadiran.length === 0 ? (
         <p className="kotak text-teks-lembut">Belum ada sesiapa sahkan kehadiran lagi.</p>
@@ -61,7 +67,8 @@ export default async function HalamanKehadiran() {
                   key={k.id} rekod={k}
                   labelStatus={LABEL_STATUS[k.status]}
                   labelBilik={LABEL_BILIK[k.bilik]}
-                  bolehPadam={sesi?.peranan === "pengerusi"}
+                  bolehPadam={akses?.penuh ?? false}
+                  bolehBayar={bolehBayar}
                 />
               ))}
             </tbody>

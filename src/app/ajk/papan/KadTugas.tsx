@@ -8,12 +8,14 @@ import type { Ajk, Biro, StatusTugas, Tugasan } from "@/lib/database.types";
 const STATUS: StatusTugas[] = ["belum_mula", "sedang_buat", "tersekat", "selesai"];
 
 export function KadTugas({
-  tugas, ajk, biro, bolehAssign,
+  tugas, ajk, biro, bolehAssign, ajkPilihan,
 }: {
   tugas: Tugasan;
   ajk: Ajk[];
   biro: Biro[];
   bolehAssign: boolean;
+  /** Senarai nama dalam dropdown assign. Lalai: semua AJK. */
+  ajkPilihan?: Ajk[];
 }) {
   const [menunggu, mula] = useTransition();
   const pemilik = ajk.find((a) => a.id === tugas.ditugaskan_kepada);
@@ -67,7 +69,7 @@ export function KadTugas({
             }}
           >
             <option value="">— Belum diassign —</option>
-            {ajk.map((a) => <option key={a.id} value={a.id}>{a.nama}</option>)}
+            {(ajkPilihan ?? ajk).map((a) => <option key={a.id} value={a.id}>{a.nama}</option>)}
           </select>
         ) : (
           <span className="text-[13px] text-teks-lembut">

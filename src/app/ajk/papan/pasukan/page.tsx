@@ -1,13 +1,13 @@
 import { muatAsasPanel } from "@/lib/data";
-import { sesiSemasa } from "@/lib/sesi-pelayan";
-import { BorangAhli, BorangBiro, BarisAhli } from "@/app/ajk/papan/pasukan/UrusPasukan";
+import { aksesSemasa } from "@/lib/sesi-pelayan";
+import { BorangAhli, BorangBiro, BarisAhli, KawalanKuota } from "@/app/ajk/papan/pasukan/UrusPasukan";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Pasukan" };
 
 export default async function HalamanPasukan() {
-  const [{ biro, ajk, tugasan }, sesi] = await Promise.all([muatAsasPanel(), sesiSemasa()]);
-  const pengerusi = sesi?.peranan === "pengerusi";
+  const [{ biro, ajk, tugasan }, akses] = await Promise.all([muatAsasPanel(), aksesSemasa()]);
+  const pengerusi = akses?.penuh ?? false;
 
   const kosongSemua = biro.reduce(
     (a, b) => a + Math.max(b.kuota - ajk.filter((x) => x.biro_id === b.id).length, 0), 0,
@@ -28,7 +28,7 @@ export default async function HalamanPasukan() {
         </>
       ) : (
         <p className="mesej mesej-ok mb-9">
-          Hanya Pengerusi boleh buka biro, tambah atau pindah ahli. Kalau ada cadangan nama, beritahu Huda.
+          Hanya Pengerusi dan Pembantu Pengerusi boleh buka biro, ubah bilangan ahli, lantik ketua, tambah atau pindah ahli. Kalau ada cadangan nama, beritahu Huda.
         </p>
       )}
 
@@ -40,7 +40,11 @@ export default async function HalamanPasukan() {
             <section key={b.id} className={`rounded-xl border p-5 ${kosong > 0 ? "border-tanah bg-[rgba(168,67,47,.04)]" : "border-[var(--garis-gelap)] bg-kerang-terang"}`}>
               <div className="mb-1 flex items-baseline gap-3">
                 <h2 className="text-[1.2rem]">{b.nama}</h2>
-                <span className="ml-auto text-[12.5px] text-teks-lembut">{senarai.length}/{b.kuota}</span>
+                {pengerusi ? (
+                  <KawalanKuota biro={b} bilangan={senarai.length} />
+                ) : (
+                  <span className="ml-auto text-[12.5px] text-teks-lembut">{senarai.length}/{b.kuota}</span>
+                )}
               </div>
               <p className="mb-3 text-[13px] leading-relaxed text-teks-lembut">{b.tugas}</p>
 
@@ -48,6 +52,7 @@ export default async function HalamanPasukan() {
                 {senarai.map((a) => (
                   <BarisAhli
                     key={a.id} ahli={a} biro={biro} bolehUrus={pengerusi}
+                    bolehLantikPembantu={akses?.jawatan === "pengerusi"}
                     tugas={tugasan.filter((t) => t.ditugaskan_kepada === a.id)}
                   />
                 ))}
