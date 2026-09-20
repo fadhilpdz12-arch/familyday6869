@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { supabasePentadbir } from "@/lib/supabase/pelayan";
-import { skemaAhliBaru } from "@/lib/skema";
+import { skemaAhliBaru, skemaBiroBaru } from "@/lib/skema";
 import { sesiPengerusi } from "@/lib/sesi-pelayan";
 import type { Keputusan } from "@/tindakan/jenis";
 
@@ -10,6 +10,51 @@ function segarkan() {
   revalidatePath("/");
   revalidatePath("/ajk/papan/pasukan");
   revalidatePath("/ajk/papan/tugas");
+  revalidatePath("/ajk/papan/kerja");
+  revalidatePath("/ajk/papan");
+}
+
+/** Pengerusi buka biro baharu. */
+export async function tambahBiro(_sebelum: Keputusan | null, data: FormData): Promise<Keputusan> {
+  if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi boleh tambah biro." };
+
+  const semakan = skemaBiroBaru.safeParse(Object.fromEntries(data));
+  if (!semakan.success) {
+    return {
+      ok: false,
+      mesej: "Isi nama biro, tugas (sekurang-kurangnya 5 huruf) dan bilangan ahli diperlukan.",
+      medan: semakan.error.flatten().fieldErrors,
+    };
+  }
+
+  const sb = supabasePentadbir();
+
+  // Nama biro mesti unik (tak kira huruf besar/kecil)
+  const { data: sama } = await sb.from("biro").select("id").ilike("nama", semakan.data.nama).limit(1);
+  if (sama && sama.length > 0) return { ok: false, mesej: `Biro "${semakan.data.nama}" dah ada.` };
+
+  // Jadual biro guna id smallint tanpa sequence, jadi ambil nombor seterusnya
+  const { data: akhir, error: ralatBaca } = await sb
+    .from("biro").select("id, urutan").order("id", { ascending: false }).limit(1);
+  if (ralatBaca) return { ok: false, mesej: "Tak dapat baca senarai biro. Cuba lagi." };
+
+  const { data: urutanAkhir } = await sb
+    .from("biro").select("urutan").order("urutan", { ascending: false }).limit(1);
+
+  const idBaru = (akhir?.[0]?.id ?? 0) + 1;
+  const urutanBaru = (urutanAkhir?.[0]?.urutan ?? 0) + 1;
+
+  const { error } = await sb.from("biro").insert({ id: idBaru, urutan: urutanBaru, ...semakan.data });
+  if (error) {
+    // 23505 = unique violation (dua orang tekan serentak atau nama bertembung)
+    return {
+      ok: false,
+      mesej: error.code === "23505" ? "Biro tu dah ada, atau ada orang lain baru tambah. Muat semula dan cuba lagi." : "Tak dapat tambah biro.",
+    };
+  }
+
+  segarkan();
+  return { ok: true, mesej: `Biro ${semakan.data.nama} dah dibuka. Sekarang boleh masukkan ahli.` };
 }
 
 /** Pengerusi isi kekosongan biro. */
