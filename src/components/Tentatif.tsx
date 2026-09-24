@@ -11,7 +11,6 @@ const HARI = [
 
 export function Tentatif({ baris, posterUrl }: { baris: BarisTentatif[]; posterUrl?: string }) {
   const [hari, setHari] = useState(1);
-  const [tunjukTeks, setTunjukTeks] = useState(!posterUrl);
   const senarai = baris.filter((b) => b.hari === hari);
   const adaDraf = senarai.some((b) => b.draf);
 
@@ -31,19 +30,10 @@ export function Tentatif({ baris, posterUrl }: { baris: BarisTentatif[]; posterU
               src={posterUrl} alt="Poster atur cara Family Day 2026"
               className="mx-auto block w-full max-w-[720px] rounded-2xl border border-[var(--garis-gelap)] shadow-[0_8px_30px_rgba(0,0,0,.12)]"
             />
-            <p className="mt-3.5 text-center text-[13px] text-teks-lembut">
-              Draf terkini — boleh berubah sikit sebelum hari acara.{" "}
-              <button
-                type="button" onClick={() => setTunjukTeks((v) => !v)}
-                className="underline underline-offset-2 hover:text-tembaga"
-              >
-                {tunjukTeks ? "Sembunyikan jadual teks" : "Lihat versi teks/senarai"}
-              </button>
-            </p>
           </div>
         )}
 
-        {(!posterUrl || tunjukTeks) && (
+        {!posterUrl && (
         <>
         <div role="tablist" aria-label="Pilih hari" className="mb-[30px] flex flex-wrap gap-2">
           {HARI.map((h) => {
