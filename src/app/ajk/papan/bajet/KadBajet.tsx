@@ -6,11 +6,7 @@ import { ButangHantar, Mesej } from "@/components/ui";
 import { ringgit } from "@/lib/format";
 import type { BarisBajet } from "@/lib/database.types";
 
-const LABEL_JENIS: Record<string, string> = {
-  masuk: "Masuk", keluar: "Keluar", tolak: "Tolak", jumlah: "Jumlah",
-};
-
-export function KadBajet({ baris }: { baris: BarisBajet }) {
+export function KadBajet({ baris, bolehUrus }: { baris: BarisBajet; bolehUrus: boolean }) {
   const [menunggu, mula] = useTransition();
   const [edit, tetapkanEdit] = useState(false);
   const [keputusan, tindakan] = useActionState(kemaskiniBarisBajet, null);
@@ -51,27 +47,35 @@ export function KadBajet({ baris }: { baris: BarisBajet }) {
     );
   }
 
+  const warnaAmaun = baris.jenis === "keluar" || baris.jenis === "tolak" ? "text-tanah" : "text-[#255e4f]";
+
   return (
-    <li className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-[var(--garis-gelap)] py-3 text-[14.5px]">
-      <span className="rounded-full bg-[rgba(21,43,44,.08)] px-2.5 py-0.5 text-[11px] font-bold text-teks-lembut">
-        {LABEL_JENIS[baris.jenis]}
+    <li className="flex items-start justify-between gap-4 rounded-xl border border-[var(--garis-gelap)] bg-kerang-terang px-4 py-3.5">
+      <div className="min-w-0">
+        <p className="font-semibold leading-snug">{baris.label}</p>
+        {baris.keterangan && <p className="mt-0.5 text-[13px] leading-snug text-teks-lembut">{baris.keterangan}</p>}
+        {bolehUrus && (
+          <div className="mt-2 flex gap-3">
+            <button type="button" onClick={() => tetapkanEdit(true)} className="text-[12px] underline underline-offset-2 hover:text-tembaga">
+              Edit
+            </button>
+            <button
+              type="button" disabled={menunggu}
+              onClick={() => {
+                if (!confirm(`Padam baris "${baris.label}"?`)) return;
+                mula(async () => { await padamBarisBajet(baris.id); });
+              }}
+              className="text-[12px] text-tanah underline underline-offset-2 disabled:opacity-50"
+            >
+              Padam
+            </button>
+          </div>
+        )}
+      </div>
+      <span className={`shrink-0 whitespace-nowrap pt-0.5 font-display angka-jadual text-[1.15rem] ${warnaAmaun}`}>
+        {(baris.jenis === "keluar" || baris.jenis === "tolak") && "− "}
+        {ringgit(Number(baris.amaun))}
       </span>
-      <span className="font-semibold">{baris.label}</span>
-      {baris.keterangan && <span className="text-[13px] text-teks-lembut">{baris.keterangan}</span>}
-      <span className="ml-auto font-display angka-jadual text-[1.05rem]">{ringgit(Number(baris.amaun))}</span>
-      <button type="button" onClick={() => tetapkanEdit(true)} className="text-[12px] underline underline-offset-2 hover:text-tembaga">
-        Edit
-      </button>
-      <button
-        type="button" disabled={menunggu}
-        onClick={() => {
-          if (!confirm(`Padam baris "${baris.label}"?`)) return;
-          mula(async () => { await padamBarisBajet(baris.id); });
-        }}
-        className="text-[12px] text-tanah underline underline-offset-2 disabled:opacity-50"
-      >
-        Padam
-      </button>
     </li>
   );
 }

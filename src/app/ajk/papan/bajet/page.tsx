@@ -1,5 +1,5 @@
 import { muatBajet } from "@/lib/data";
-import { sesiSemasa } from "@/lib/sesi-pelayan";
+import { aksesSemasa, bolehUrusBayaran } from "@/lib/sesi-pelayan";
 import { ringgit } from "@/lib/format";
 import { BorangBajet } from "@/app/ajk/papan/bajet/BorangBajet";
 import { KadBajet } from "@/app/ajk/papan/bajet/KadBajet";
@@ -8,12 +8,17 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Bajet" };
 
 export default async function HalamanBajet() {
-  const [baris, sesi] = await Promise.all([muatBajet(), sesiSemasa()]);
-  const pengerusi = sesi?.peranan === "pengerusi";
+  const [baris, akses] = await Promise.all([muatBajet(), aksesSemasa()]);
+  const bolehUrus = await bolehUrusBayaran(akses);
 
-  const masuk = baris.filter((b) => b.jenis === "masuk").reduce((a, b) => a + Number(b.amaun), 0);
-  const keluar = baris.filter((b) => b.jenis === "keluar" || b.jenis === "tolak").reduce((a, b) => a + Number(b.amaun), 0);
+  const masukBaris = baris.filter((b) => b.jenis === "masuk");
+  const keluarBaris = baris.filter((b) => b.jenis === "keluar" || b.jenis === "tolak");
+  const catatanBaris = baris.filter((b) => b.jenis === "jumlah");
+
+  const masuk = masukBaris.reduce((a, b) => a + Number(b.amaun), 0);
+  const keluar = keluarBaris.reduce((a, b) => a + Number(b.amaun), 0);
   const baki = masuk - keluar;
+  const peratusBelanja = masuk > 0 ? Math.min(100, Math.round((keluar / masuk) * 100)) : 0;
 
   return (
     <main className="wrap pt-9">
@@ -23,7 +28,7 @@ export default async function HalamanBajet() {
         perubahan di sini terus naik ke laman awam.
       </p>
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+      <div className="mb-3 grid gap-4 sm:grid-cols-3">
         <div className="kotak">
           <p className="mb-1 text-[12.5px] font-semibold text-teks-lembut">Jumlah masuk</p>
           <p className="font-display angka-jadual text-2xl text-[#255e4f]">{ringgit(masuk)}</p>
@@ -38,30 +43,60 @@ export default async function HalamanBajet() {
         </div>
       </div>
 
-      {pengerusi ? (
+      {masuk > 0 && (
+        <div className="mb-8">
+          <div className="mb-1.5 flex items-baseline justify-between text-[12.5px] text-teks-lembut">
+            <span>Kutipan dah dibelanja</span>
+            <span className="font-semibold">{peratusBelanja}%</span>
+          </div>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-[rgba(21,43,44,.08)]">
+            <div
+              className={`h-full rounded-full ${peratusBelanja >= 90 ? "bg-tanah" : "bg-lagun"}`}
+              style={{ width: `${peratusBelanja}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {bolehUrus ? (
         <BorangBajet />
       ) : (
         <p className="kotak mb-8 text-[13.5px] text-teks-lembut">
-          Hanya Pengerusi boleh tambah/edit/padam baris bajet. Bagitahu Huda kalau ada perubahan.
+          Hanya Pengerusi atau Bendahari boleh tambah/edit/padam baris bajet.
         </p>
       )}
 
       {baris.length === 0 ? (
         <p className="kotak text-teks-lembut">Belum ada baris bajet lagi.</p>
-      ) : pengerusi ? (
-        <div className="flex flex-col">
-          {baris.map((b) => <KadBajet key={b.id} baris={b} />)}
-        </div>
       ) : (
-        <ul className="m-0 flex list-none flex-col border-t border-[var(--garis-gelap)] p-0">
-          {baris.map((b) => (
-            <li key={b.id} className="flex flex-wrap items-center gap-4 border-b border-[var(--garis-gelap)] py-3 text-[14.5px]">
-              <span className="font-semibold">{b.label}</span>
-              {b.keterangan && <span className="text-[13px] text-teks-lembut">{b.keterangan}</span>}
-              <span className="ml-auto font-display angka-jadual text-[1.05rem]">{ringgit(Number(b.amaun))}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-9">
+          {masukBaris.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-[1.15rem] text-[#255e4f]">💰 Pemasukan</h2>
+              <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+                {masukBaris.map((b) => <KadBajet key={b.id} baris={b} bolehUrus={bolehUrus} />)}
+              </ul>
+            </section>
+          )}
+
+          {keluarBaris.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-[1.15rem] text-tanah">💸 Perbelanjaan &amp; potongan</h2>
+              <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+                {keluarBaris.map((b) => <KadBajet key={b.id} baris={b} bolehUrus={bolehUrus} />)}
+              </ul>
+            </section>
+          )}
+
+          {catatanBaris.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-[1.15rem]">📌 Catatan</h2>
+              <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+                {catatanBaris.map((b) => <KadBajet key={b.id} baris={b} bolehUrus={bolehUrus} />)}
+              </ul>
+            </section>
+          )}
+        </div>
       )}
     </main>
   );

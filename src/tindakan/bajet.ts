@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { supabasePentadbir } from "@/lib/supabase/pelayan";
 import { skemaBajetBaru, skemaBajetKemaskini } from "@/lib/skema";
-import { sesiPengerusi } from "@/lib/sesi-pelayan";
+import { aksesSemasa, bolehUrusBayaran } from "@/lib/sesi-pelayan";
 import type { Keputusan } from "@/tindakan/jenis";
 
 function segarkan() {
@@ -12,8 +12,12 @@ function segarkan() {
   revalidatePath("/ajk/papan/bajet");
 }
 
+async function bolehUrus(): Promise<boolean> {
+  return bolehUrusBayaran(await aksesSemasa());
+}
+
 export async function ciptaBarisBajet(_sebelum: Keputusan | null, data: FormData): Promise<Keputusan> {
-  if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi boleh urus bajet." };
+  if (!(await bolehUrus())) return { ok: false, mesej: "Hanya Pengerusi atau Bendahari boleh urus bajet." };
 
   const semakan = skemaBajetBaru.safeParse(Object.fromEntries(data));
   if (!semakan.success) {
@@ -28,7 +32,7 @@ export async function ciptaBarisBajet(_sebelum: Keputusan | null, data: FormData
 }
 
 export async function kemaskiniBarisBajet(_sebelum: Keputusan | null, data: FormData): Promise<Keputusan> {
-  if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi boleh urus bajet." };
+  if (!(await bolehUrus())) return { ok: false, mesej: "Hanya Pengerusi atau Bendahari boleh urus bajet." };
 
   const semakan = skemaBajetKemaskini.safeParse(Object.fromEntries(data));
   if (!semakan.success) {
@@ -44,7 +48,7 @@ export async function kemaskiniBarisBajet(_sebelum: Keputusan | null, data: Form
 }
 
 export async function padamBarisBajet(id: string): Promise<Keputusan> {
-  if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi boleh urus bajet." };
+  if (!(await bolehUrus())) return { ok: false, mesej: "Hanya Pengerusi atau Bendahari boleh urus bajet." };
   const { error } = await supabasePentadbir().from("bajet").delete().eq("id", id);
   if (error) return { ok: false, mesej: "Tak dapat padam." };
   segarkan();
