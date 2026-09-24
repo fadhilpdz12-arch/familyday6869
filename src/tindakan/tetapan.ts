@@ -57,27 +57,34 @@ export async function padamPoster(): Promise<Keputusan> {
   return { ok: true, mesej: "Poster dibuang, jadual teks dipaparkan semula." };
 }
 
-/** Pengerusi sahaja: naikkan lagu tema untuk pemain muzik terapung di laman awam. */
-export async function muatNaikLagu(_sebelum: Keputusan | null, data: FormData): Promise<Keputusan> {
+/**
+ * Naikkan fail terus dari browser ke Supabase Storage (skip Vercel) —
+ * Vercel ada had keras ~4.5MB setiap request pada function-nya, dan lagu
+ * biasanya lebih besar dari tu. Dua langkah:
+ *  1) mintaMuatNaikLagu — sediakan pautan sekali-guna (request kecil sahaja)
+ *  2) selesaiMuatNaikLagu — lepas pelayar upload fail terus ke Supabase,
+ *     simpan URL awam dalam tetapan.
+ */
+export async function mintaMuatNaikLagu(
+  jenisMime: string, saiz: number,
+): Promise<{ ok: true; laluan: string; token: string } | { ok: false; mesej: string }> {
   if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi boleh naikkan lagu." };
+  if (!JENIS_AUDIO.has(jenisMime)) return { ok: false, mesej: "Format tak disokong. Guna MP3, WAV, M4A atau OGG." };
+  if (saiz > SAIZ_MAKS_AUDIO) return { ok: false, mesej: "Fail terlalu besar (maksimum 15MB)." };
 
-  const fail = data.get("lagu");
-  if (!(fail instanceof File) || fail.size === 0) return { ok: false, mesej: "Sila pilih fail audio." };
-  if (!JENIS_AUDIO.has(fail.type)) return { ok: false, mesej: "Format tak disokong. Guna MP3, WAV, M4A atau OGG." };
-  if (fail.size > SAIZ_MAKS_AUDIO) return { ok: false, mesej: "Fail terlalu besar (maksimum 15MB)." };
-
-  const sambungan = fail.type.includes("wav") ? "wav" : fail.type.includes("ogg") ? "ogg" : fail.type.includes("mp4") || fail.type.includes("m4a") ? "m4a" : "mp3";
+  const sambungan = jenisMime.includes("wav") ? "wav" : jenisMime.includes("ogg") ? "ogg" : jenisMime.includes("mp4") || jenisMime.includes("m4a") ? "m4a" : "mp3";
   const laluan = `audio/tema-${Date.now()}.${sambungan}`;
 
-  const sb = supabasePentadbir();
-  const { error: ralatMuatNaik } = await sb.storage.from("media").upload(laluan, fail, {
-    contentType: fail.type, upsert: true,
-  });
-  if (ralatMuatNaik) return { ok: false, mesej: "Tak dapat muat naik fail." };
+  const { data, error } = await supabasePentadbir().storage.from("media").createSignedUploadUrl(laluan);
+  if (error || !data) return { ok: false, mesej: "Tak dapat sediakan pautan muat naik." };
 
-  const { data: awam } = sb.storage.from("media").getPublicUrl(laluan);
+  return { ok: true, laluan: data.path, token: data.token };
+}
+
+export async function selesaiMuatNaikLagu(laluan: string): Promise<Keputusan> {
+  if (!(await sesiPengerusi())) return { ok: false, mesej: "Hanya Pengerusi boleh urus lagu tema." };
+  const { data: awam } = supabasePentadbir().storage.from("media").getPublicUrl(laluan);
   await simpanTetapan("lagu_tema", awam.publicUrl);
-
   segarkanSemua();
   return { ok: true, mesej: "Lagu tema dah dikemas kini." };
 }

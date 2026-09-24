@@ -1,15 +1,49 @@
 "use client";
 
-import { useActionState, useRef, useTransition } from "react";
-import { muatNaikLagu, muatNaikPoster, padamLagu, padamPoster } from "@/tindakan/tetapan";
+import { useActionState, useRef, useState, useTransition } from "react";
+import { muatNaikPoster, mintaMuatNaikLagu, padamLagu, padamPoster, selesaiMuatNaikLagu } from "@/tindakan/tetapan";
+import { supabasePelayar } from "@/lib/supabase/pelayar";
 import { ButangHantar, Mesej } from "@/components/ui";
+import type { Keputusan } from "@/tindakan/jenis";
 
 export function TetapanLaman({ posterUrl, laguUrl }: { posterUrl?: string; laguUrl?: string }) {
   const [hasilPoster, tindakanPoster] = useActionState(muatNaikPoster, null);
-  const [hasilLagu, tindakanLagu] = useActionState(muatNaikLagu, null);
   const [menunggu, mula] = useTransition();
   const borangPoster = useRef<HTMLFormElement>(null);
-  const borangLagu = useRef<HTMLFormElement>(null);
+
+  const [hasilLagu, tetapkanHasilLagu] = useState<Keputusan | null>(null);
+  const [muatNaikLaguSedangJalan, tetapkanMuatNaikLagu] = useState(false);
+  const inputLagu = useRef<HTMLInputElement>(null);
+
+  async function pilihLagu(e: React.ChangeEvent<HTMLInputElement>) {
+    const fail = e.target.files?.[0];
+    if (!fail) return;
+    tetapkanMuatNaikLagu(true);
+    tetapkanHasilLagu(null);
+
+    try {
+      const minta = await mintaMuatNaikLagu(fail.type, fail.size);
+      if (!minta.ok) {
+        tetapkanHasilLagu({ ok: false, mesej: minta.mesej });
+        return;
+      }
+      const sb = supabasePelayar();
+      if (!sb) {
+        tetapkanHasilLagu({ ok: false, mesej: "Tak dapat sambung ke storan." });
+        return;
+      }
+      const { error } = await sb.storage.from("media").uploadToSignedUrl(minta.laluan, minta.token, fail);
+      if (error) {
+        tetapkanHasilLagu({ ok: false, mesej: "Muat naik ke storan gagal." });
+        return;
+      }
+      const hasil = await selesaiMuatNaikLagu(minta.laluan);
+      tetapkanHasilLagu(hasil);
+    } finally {
+      tetapkanMuatNaikLagu(false);
+      if (inputLagu.current) inputLagu.current.value = "";
+    }
+  }
 
   return (
     <section className="mb-11 grid gap-5 sm:grid-cols-2">
@@ -55,11 +89,14 @@ export function TetapanLaman({ posterUrl, laguUrl }: { posterUrl?: string; laguU
           <p className="mb-3 text-[13px] italic text-teks-lembut">Belum ada lagu — butang muzik tak dipaparkan lagi.</p>
         )}
         <Mesej keputusan={hasilLagu} />
-        <form ref={borangLagu} action={async (d) => { await tindakanLagu(d); borangLagu.current?.reset(); }} className="flex flex-wrap items-center gap-2">
-          <input type="file" name="lagu" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,.m4a" required
-                 className="max-w-full text-[13px]" />
-          <ButangHantar kelas="btn btn-halus">Naik lagu</ButangHantar>
-        </form>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={inputLagu} type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,.m4a"
+            disabled={muatNaikLaguSedangJalan} onChange={pilihLagu}
+            className="max-w-full text-[13px] disabled:opacity-50"
+          />
+          {muatNaikLaguSedangJalan && <span className="text-[12.5px] text-teks-lembut">Sedang naikkan…</span>}
+        </div>
         {laguUrl && (
           <button
             type="button" disabled={menunggu}
