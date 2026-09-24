@@ -32,6 +32,13 @@ export const metadata: Metadata = {
     title: `${ACARA.tajuk} — ${ACARA.keluarga}`,
     description: `${ACARA.julatTarikh} · ${ACARA.tempat}, ${ACARA.daerah}`,
   },
+  // Bagi ikon di skrin utama bila "Add to Home Screen" — Android baca manifest.ts,
+  // iPhone/Safari baca apple-icon.png + tetapan appleWebApp di bawah.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Family Day 2026",
+  },
   // Acara keluarga persendirian — jangan diindeks enjin carian.
   robots: { index: false, follow: false },
 };
