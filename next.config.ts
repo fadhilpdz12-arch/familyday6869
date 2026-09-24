@@ -16,6 +16,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,
+  experimental: {
+    serverActions: {
+      // Naikkan daripada had lalai 1MB — poster (maks 8MB) dan lagu tema
+      // (maks 15MB) dimuat naik terus melalui Server Action.
+      bodySizeLimit: "16mb",
+    },
+  },
   async headers() {
     return [
       {
