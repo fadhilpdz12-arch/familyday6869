@@ -1,5 +1,9 @@
 "use server";
 
+// Muat naik fail media (poster/lagu) ke Supabase Storage boleh ambil masa
+// lebih lama pada sambungan perlahan — bagi ruang lebih daripada had lalai.
+export const maxDuration = 60;
+
 import { revalidatePath } from "next/cache";
 import { supabasePentadbir } from "@/lib/supabase/pelayan";
 import { sesiPengerusi } from "@/lib/sesi-pelayan";
