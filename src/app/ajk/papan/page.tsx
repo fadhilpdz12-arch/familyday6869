@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { laporanHariIni, muatAsasPanel, muatKehadiranPenuh, muatPetugas, muatRancangan, muatRisiko } from "@/lib/data";
+import { laporanHariIni, muatAsasPanel, muatKehadiranPenuh, muatPetugas, muatRancangan, muatRisiko, muatTetapan } from "@/lib/data";
 import { aksesSemasa, bolehUrusBiro } from "@/lib/sesi-pelayan";
 import { KadTugas } from "@/app/ajk/papan/KadTugas";
+import { TetapanLaman } from "@/app/ajk/papan/TetapanLaman";
 import { ACARA, LABEL_HARI } from "@/lib/acara";
 import { LABEL_KEMASKINI, bakiHari, ringgit, tarikhMY } from "@/lib/format";
 
@@ -9,8 +10,8 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Ringkasan" };
 
 export default async function Ringkasan() {
-  const [{ biro, ajk, tugasan }, harian, { statistik }, risiko, { rancangan, pic }, petugas, akses] = await Promise.all([
-    muatAsasPanel(), laporanHariIni(), muatKehadiranPenuh(), muatRisiko(), muatRancangan(), muatPetugas(), aksesSemasa(),
+  const [{ biro, ajk, tugasan }, harian, { statistik }, risiko, { rancangan, pic }, petugas, tetapan, akses] = await Promise.all([
+    muatAsasPanel(), laporanHariIni(), muatKehadiranPenuh(), muatRisiko(), muatRancangan(), muatPetugas(), muatTetapan(), aksesSemasa(),
   ]);
   const sesi = akses?.sesi;
 
@@ -190,6 +191,7 @@ export default async function Ringkasan() {
           ))}
         </ul>
       )}
+      {pengerusi && <TetapanLaman posterUrl={tetapan.poster_tentatif} laguUrl={tetapan.lagu_tema} />}
     </main>
   );
 }

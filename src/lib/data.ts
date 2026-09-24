@@ -4,7 +4,7 @@ import { hariIniMY } from "@/lib/format";
 import type {
   Ajk, BarisBajet, Barang, Biro, Cadangan, Kehadiran, KehadiranAwam,
   KemajuanBiro, Kemaskini, PetugasHari, RancanganBahan, RancanganKerja,
-  RancanganPautan, RancanganPic, Risiko, StatistikAwam, Tentatif, Tugasan,
+  RancanganPautan, RancanganPic, Risiko, StatistikAwam, Tentatif, Tetapan, Tugasan,
 } from "@/lib/database.types";
 
 const STATISTIK_KOSONG: StatistikAwam = {
@@ -22,13 +22,14 @@ export async function muatLamanUtama() {
       bajet: [] as BarisBajet[], kemajuan: [] as KemajuanBiro[],
       barang: [] as Barang[], cadangan: [] as Cadangan[],
       kehadiran: [] as KehadiranAwam[], statistik: STATISTIK_KOSONG,
+      tetapan: {} as Record<string, string>,
     };
   }
 }
 
 async function bacaLamanUtama() {
   const sb = supabasePentadbir();
-  const [biro, ajk, tentatif, bajet, kemajuan, barang, cadangan, kehadiran, statistik] =
+  const [biro, ajk, tentatif, bajet, kemajuan, barang, cadangan, kehadiran, statistik, tetapan] =
     await Promise.all([
       sb.from("biro").select("*").order("urutan"),
       sb.from("ajk").select("*").eq("aktif", true).order("urutan"),
@@ -39,7 +40,13 @@ async function bacaLamanUtama() {
       sb.from("cadangan").select("*").order("dicipta", { ascending: false }).limit(60),
       sb.from("kehadiran_awam").select("*").order("dicipta"),
       sb.from("statistik_awam").select("*").maybeSingle(),
+      sb.from("tetapan").select("*"),
     ]);
+
+  const petaTetapan: Record<string, string> = {};
+  for (const t of (tetapan.data ?? []) as Tetapan[]) {
+    if (t.nilai) petaTetapan[t.kunci] = t.nilai;
+  }
 
   return {
     biro: (biro.data ?? []) as Biro[],
@@ -51,6 +58,7 @@ async function bacaLamanUtama() {
     cadangan: (cadangan.data ?? []) as Cadangan[],
     kehadiran: (kehadiran.data ?? []) as KehadiranAwam[],
     statistik: (statistik.data as StatistikAwam | null) ?? STATISTIK_KOSONG,
+    tetapan: petaTetapan,
   };
 }
 
@@ -142,6 +150,20 @@ export async function muatRancangan() {
 export async function muatPetugas(): Promise<PetugasHari[]> {
   const { data } = await supabasePentadbir().from("petugas_hari").select("*").order("hari").order("urutan");
   return (data ?? []) as PetugasHari[];
+}
+
+export async function muatBajet(): Promise<BarisBajet[]> {
+  const { data } = await supabasePentadbir().from("bajet").select("*").order("jenis").order("urutan");
+  return (data ?? []) as BarisBajet[];
+}
+
+export async function muatTetapan(): Promise<Record<string, string>> {
+  const { data } = await supabasePentadbir().from("tetapan").select("*");
+  const peta: Record<string, string> = {};
+  for (const t of (data ?? []) as Tetapan[]) {
+    if (t.nilai) peta[t.kunci] = t.nilai;
+  }
+  return peta;
 }
 
 export async function muatCadangan(): Promise<Cadangan[]> {

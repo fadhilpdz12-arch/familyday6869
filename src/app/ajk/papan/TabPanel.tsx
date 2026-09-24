@@ -11,6 +11,7 @@ const TAB = [
   { laluan: "/ajk/papan/pasukan", teks: "Pasukan" },
   { laluan: "/ajk/papan/risiko", teks: "Pelan sandaran" },
   { laluan: "/ajk/papan/kehadiran", teks: "Kehadiran" },
+  { laluan: "/ajk/papan/bajet", teks: "Bajet" },
 ] as const;
 
 export function TabPanel() {

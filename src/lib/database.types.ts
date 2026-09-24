@@ -205,3 +205,9 @@ export interface PetugasHari {
   nota: string | null;
   urutan: number;
 }
+
+export interface Tetapan {
+  kunci: string;
+  nilai: string | null;
+  dikemas: string;
+}

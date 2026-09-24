@@ -164,3 +164,15 @@ export const skemaRisikoBaru = z.object({
   penanggungjawab: z.string().uuid().optional().nullable(),
   rancangan_id: z.string().uuid().optional().nullable(),
 });
+
+// ------------------------------------------------------------------ bajet
+export const skemaBajetBaru = z.object({
+  label: teksBersih(2, 120),
+  keterangan: z.string().trim().max(300).optional().transform((v) => v || null),
+  amaun: z.coerce.number().min(0).max(999999),
+  jenis: z.enum(["masuk", "keluar", "tolak", "jumlah"]),
+});
+
+export const skemaBajetKemaskini = skemaBajetBaru.extend({
+  id: z.string().uuid(),
+});

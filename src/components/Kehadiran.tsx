@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { hantarKehadiran } from "@/tindakan/kehadiran";
 import { ButangHantar, Mesej, Ralat } from "@/components/ui";
 import { LABEL_BILIK, LABEL_STATUS, LABEL_TIBA, ringgit } from "@/lib/format";
 import { ACARA } from "@/lib/acara";
+import { KadJemputan } from "@/components/KadJemputan";
 import type { KehadiranAwam, StatistikAwam } from "@/lib/database.types";
 
 export function Kehadiran({
@@ -15,6 +16,7 @@ export function Kehadiran({
   statistik: StatistikAwam;
 }) {
   const [keputusan, tindakan] = useActionState(hantarKehadiran, null);
+  const [dataDihantar, tetapkanDataDihantar] = useState<{ nama: string; status: string; dewasa: number; kanak: number } | null>(null);
   const medan = keputusan && !keputusan.ok ? keputusan.medan : undefined;
 
   return (
@@ -29,8 +31,24 @@ export function Kehadiran({
           </p>
         </div>
 
-        <form action={tindakan} className="kotak mb-11">
+        <form
+          action={tindakan}
+          onSubmit={(e) => {
+            const d = new FormData(e.currentTarget);
+            tetapkanDataDihantar({
+              nama: String(d.get("nama_keluarga") ?? ""),
+              status: String(d.get("status") ?? "hadir"),
+              dewasa: Number(d.get("dewasa") ?? 0),
+              kanak: Number(d.get("kanak") ?? 0),
+            });
+          }}
+          className="kotak mb-11"
+        >
           <Mesej keputusan={keputusan} />
+
+          {keputusan?.ok && dataDihantar?.status === "hadir" && (
+            <KadJemputan namaKeluarga={dataDihantar.nama} dewasa={dataDihantar.dewasa} kanak={dataDihantar.kanak} />
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="medan">

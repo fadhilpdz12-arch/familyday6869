@@ -9,8 +9,9 @@ const HARI = [
   { no: 3, teks: "Hari ketiga", tarikh: "Ahad, 13 Dis" },
 ] as const;
 
-export function Tentatif({ baris }: { baris: BarisTentatif[] }) {
+export function Tentatif({ baris, posterUrl }: { baris: BarisTentatif[]; posterUrl?: string }) {
   const [hari, setHari] = useState(1);
+  const [tunjukTeks, setTunjukTeks] = useState(!posterUrl);
   const senarai = baris.filter((b) => b.hari === hari);
   const adaDraf = senarai.some((b) => b.draf);
 
@@ -23,6 +24,27 @@ export function Tentatif({ baris }: { baris: BarisTentatif[] }) {
           <p>Waktu solat dijaga sepanjang tiga hari. Aktiviti boleh dianjak sikit ikut keadaan, tapi waktu makan dan check out kekal.</p>
         </div>
 
+        {posterUrl && (
+          <div className="mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={posterUrl} alt="Poster atur cara Family Day 2026"
+              className="mx-auto block w-full max-w-[720px] rounded-2xl border border-[var(--garis-gelap)] shadow-[0_8px_30px_rgba(0,0,0,.12)]"
+            />
+            <p className="mt-3.5 text-center text-[13px] text-teks-lembut">
+              Draf terkini — boleh berubah sikit sebelum hari acara.{" "}
+              <button
+                type="button" onClick={() => setTunjukTeks((v) => !v)}
+                className="underline underline-offset-2 hover:text-tembaga"
+              >
+                {tunjukTeks ? "Sembunyikan jadual teks" : "Lihat versi teks/senarai"}
+              </button>
+            </p>
+          </div>
+        )}
+
+        {(!posterUrl || tunjukTeks) && (
+        <>
         <div role="tablist" aria-label="Pilih hari" className="mb-[30px] flex flex-wrap gap-2">
           {HARI.map((h) => {
             const pilih = h.no === hari;
@@ -87,6 +109,8 @@ export function Tentatif({ baris }: { baris: BarisTentatif[] }) {
             ))}
           </ol>
         </div>
+        </>
+        )}
       </div>
     </section>
   );

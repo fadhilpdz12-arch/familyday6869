@@ -9,6 +9,7 @@ import { Bajet } from "@/components/Bajet";
 import { Kehadiran } from "@/components/Kehadiran";
 import { Persiapan } from "@/components/Persiapan";
 import { Panduan, Kaki } from "@/components/Panduan";
+import { MuzikTema } from "@/components/MuzikTema";
 import { muatLamanUtama } from "@/lib/data";
 
 // Data berubah sepanjang hari; segar semula setiap 30 saat, dan serta-merta
@@ -25,7 +26,7 @@ export default async function LamanUtama() {
         <Hero />
         <Maklumat />
         <Kemudahan />
-        <Tentatif baris={d.tentatif} />
+        <Tentatif baris={d.tentatif} posterUrl={d.tetapan.poster_tentatif} />
         <SenaraiAjk biro={d.biro} ahli={d.ajk} />
         <Kemajuan senarai={d.kemajuan} />
         <Bajet baris={d.bajet} />
@@ -34,6 +35,7 @@ export default async function LamanUtama() {
         <Panduan />
       </main>
       <Kaki />
+      <MuzikTema url={d.tetapan.lagu_tema} />
     </>
   );
 }
